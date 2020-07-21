@@ -1,8 +1,14 @@
+"""
+A general language for json-serialization of a function call.
+- Any construction of a python object needs to go through a function call that makes it so
+this approach is general.
+- It’s also simple at its base, but open (and intended for) extensions to specialize
+and compress the language as well as add layers for security.
+
+"""
 import os
 import importlib
-from warnings import warn
 from functools import reduce
-from py2store.util import DictAttr, str_to_var_str
 
 FAK = '$fak'
 
@@ -66,10 +72,23 @@ def dflt_func_loader(f) -> callable:
 
 
 def _fakit(f: callable, a: (tuple, list), k: dict):
+    """The function that actually executes the fak command.
+    Simply: `f(*(a or ()), **(k or {}))`
+
+    >>> _fakit(print, ('Hello world!',))
+    Hello world!
+
+    """
     return f(*(a or ()), **(k or {}))
 
 
 def fakit_from_dict(d, func_loader=assert_callable):
+    """
+
+    :param d:
+    :param func_loader:
+    :return:
+    """
     return _fakit(func_loader(d['f']), a=d.get('a', ()), k=d.get('k', {}))
 
 
