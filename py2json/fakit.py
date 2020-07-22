@@ -5,6 +5,7 @@ this approach is general.
 - It’s also simple at its base, but open (and intended for) extensions to specialize
 and compress the language as well as add layers for security.
 
+Note: "fakit" can be pronounced with the "a" as in "bake" or a
 """
 import os
 import importlib
@@ -44,14 +45,22 @@ def dotpath_to_obj(dotpath):
 def dotpath_to_func(f: (str, callable)) -> callable:
     """Loads and returns the function referenced by f,
     which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one.
+
+    >>> f = dotpath_to_func('os.path.join')
+    >>> assert callable(f)  # I got a callable!
+    >>> assert f.__name__ == 'join'  # and indeed, it's name is join
+    >>> from inspect import signature
+    >>> signature(f)  # and it's signature is indeed that of os.path.join:
+    <Signature (a, *p)>
+    >>>
+    >>> # and just for fun...
+    >>> assert signature(dotpath_to_func('inspect.signature')) == signature(signature)
     """
 
     if isinstance(f, str):
-        if '.' in f:
-            *module_path, func_name = f.split('.')
-            f = getattr(importlib.import_module('.'.join(module_path)), func_name)
-        else:
-            f = getattr(importlib.import_module('py2store'), f)
+        assert '.' in f, f"Must have at least one dot in the dot path: {f}"
+        *module_path, func_name = f.split('.')
+        f = getattr(importlib.import_module('.'.join(module_path)), func_name)
 
     return assert_callable(f)
 
@@ -119,16 +128,45 @@ def fakit(fak, func_loader=dflt_func_loader):
 
     Essentially returns func_loader(f)(*a, **k)
 
+    The `func_loader` is where you specify any validation of func specification and/or how to get a callable from it.
+    The default `func_loader` will produce a callable from a dot path (e.g. `'os.path.join'`),
+    But note that the intended use is for the user to use their own `func_loader`.
+    The user should do this, amongst other things:
+    - For security purposes, like not allowing `subprocess.call` or such.
+    - For expressivity purposes, like to create their own domain specific mini-language
+     that maps function specification to actual function.
+
     Args:
         fak: A (f, a, k) specification. Could be a tuple or a dict (with 'f', 'a', 'k' keys). All but f are optional.
-        func_loader: A function returning a function. This is where you specify any validation of func specification f,
-            and/or how to get a callable from it.
+        func_loader: A function returning a function.
 
     Returns: A python object.
 
     >>> fak = {'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']}
     >>> fakit(fak)
     'I/am/a/filepath'
+
+    >>> from inspect import signature
+    >>>
+    >>> A = fakit({'f': 'collections.namedtuple', 'a': ['A', 'x y z'], 'k': {'defaults': (2, 3)}})
+    >>> # A should be equivalent to `collections.namedtuple('A', 'x y z', defaults=(2, 3))`
+    >>> signature(A)
+    <Signature (x, y=2, z=3)>
+    >>> A(1)
+    A(x=1, y=2, z=3)
+    >>> A(42, z='forty two')
+    A(x=42, y=2, z='forty two')
+
+    >>> def foo(x, y, z=3):
+    ...     return x + y * z
+    >>> func_map = {
+    ...     'foo': foo,
+    ...     'bar': (lambda a, b='world': f"{a} {b}!"),
+    ...     'sig': signature}
+    >>> from functools import partial
+    >>> call_func = partial(fakit, func_loader=func_map.get)
+    >>> call_func({'f': 'foo', 'a': (1, 10)})
+    31
     """
 
     if isinstance(fak, dict):
@@ -141,7 +179,3 @@ def fakit(fak, func_loader=dflt_func_loader):
 fakit.from_dict = fakit_from_dict
 fakit.from_tuple = fakit_from_tuple
 
-if __name__ == '__main__':
-    fak = {'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']}
-    fakit(fak)
-    'I/am/a/filepath'
