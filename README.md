@@ -19,7 +19,7 @@ The only value of an object is behavior that will ensue. This may be the behavio
 Our approach to converting a python object to a json will touch on some i2i cornerstones that are more general: Conversion and contextualization. 
 
 
-# Example
+# Behavior equivalence: What do we need an object to have?
 
 Say we are given the code below.
 
