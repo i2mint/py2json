@@ -9,7 +9,7 @@ Note: "fakit" can be pronounced with the "a" as in "bake" or a
 """
 import os
 import importlib
-from functools import reduce
+from functools import reduce, partial
 
 FAK = '$fak'
 
@@ -33,7 +33,7 @@ def assert_callable(f: callable) -> callable:
     return f
 
 
-def dotpath_to_obj(dotpath):
+def dotpath_to_obj(dotpath: str):
     """Loads and returns the object referenced by the string DOTPATH_TO_MODULE.OBJ_NAME"""
     *module_path, obj_name = dotpath.split('.')
     if len(module_path) > 0:
@@ -42,7 +42,7 @@ def dotpath_to_obj(dotpath):
         return importlib.import_module(obj_name)
 
 
-def dotpath_to_func(f: (str, callable)) -> callable:
+def dotpath_to_func(f: str) -> callable:
     """Loads and returns the function referenced by f,
     which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one.
 
@@ -57,11 +57,9 @@ def dotpath_to_func(f: (str, callable)) -> callable:
     >>> assert signature(dotpath_to_func('inspect.signature')) == signature(signature)
     """
 
-    if isinstance(f, str):
-        assert '.' in f, f"Must have at least one dot in the dot path: {f}"
-        *module_path, func_name = f.split('.')
-        f = getattr(importlib.import_module('.'.join(module_path)), func_name)
-
+    assert isinstance(f, str) and '.' in f, f"Must be a string with at least one dot in the dot path: {f}"
+    *module_path, func_name = f.split('.')
+    f = getattr(importlib.import_module('.'.join(module_path)), func_name)
     return assert_callable(f)
 
 
@@ -72,9 +70,11 @@ def compose(*functions):
 
 def dflt_func_loader(f) -> callable:
     """Loads and returns the function referenced by f,
-    which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one, or a pipeline of these
+    which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one, or a pipeline of these.
     """
-    if isinstance(f, str) or callable(f):
+    if callable(f):
+        return f
+    elif isinstance(f, str):
         return dotpath_to_func(f)
     else:
         return compose(*map(dflt_func_loader, f))
@@ -84,24 +84,57 @@ def _fakit(f: callable, a: (tuple, list), k: dict):
     """The function that actually executes the fak command.
     Simply: `f(*(a or ()), **(k or {}))`
 
-    >>> _fakit(print, ('Hello world!',))
+    >>> _fakit(print, ('Hello world!',), {})
     Hello world!
 
     """
-    return f(*(a or ()), **(k or {}))
+    return f(*(a or ()), **(k or {}))  # slightly protected form of f(*a, **k)
 
 
 def fakit_from_dict(d, func_loader=assert_callable):
-    """
+    """Execute `f(*a, **k)` where `f`, `a`, and `k` are specified in a dict with those fields.
 
-    :param d:
-    :param func_loader:
-    :return:
+    This function does two things for you:
+    - grabs the `(f, a, k)` triple from a `dict` (where both `'a'` and `'k'` are optional)
+    - gives the user control over how the `f` specification resolves to a callable.
+
     """
     return _fakit(func_loader(d['f']), a=d.get('a', ()), k=d.get('k', {}))
 
 
 def fakit_from_tuple(t: (tuple, list), func_loader: callable = dflt_func_loader):
+    """In this one you specify the `fak` with a tuple (or list).
+
+    You always have to specify a function as the first element of a list (and if you can call it without arguments,
+    that's all you need).
+
+    fakit_from_tuple(['builtins.list'])
+
+    But as far as arguments are concerned, you can use a tuple or list
+    (which will be understood to be the positional arguments (`*a`)):
+
+    >>> A = fakit_from_tuple(['collections.namedtuple', ('A', 'x y z')])
+    >>> A('no', 'defaults', 'here')
+    A(x='no', y='defaults', z='here')
+
+    ... you can also use a dict (which will be understood to be the keyword arguments (`**k`)):
+
+    >>> A = fakit_from_tuple(['collections.namedtuple', {'typename': 'A', 'field_names': 'x y z'}])
+    >>> A('no', 'defaults', 'here')
+    A(x='no', y='defaults', z='here')
+
+    ... or both:
+
+    >>> A = fakit_from_tuple(['collections.namedtuple', ('A', 'x y z'), {'defaults': ('has', 'defaults')}])
+    >>> A('this one')
+    A(x='this one', y='has', z='defaults')
+
+    :param t: A tuple or list
+    :param func_loader: A function that will resolve the function to be called
+    :return: What ever the function, called on the given arguments, will return.
+
+
+    """
     f = func_loader(t[0])
     a = ()
     k = {}
@@ -126,7 +159,7 @@ def fakit_from_tuple(t: (tuple, list), func_loader: callable = dflt_func_loader)
 def fakit(fak, func_loader=dflt_func_loader):
     """Execute a fak with given f, a, k and function loader.
 
-    Essentially returns func_loader(f)(*a, **k)
+    Essentially returns `func_loader(f)(*a, **k)` where `(f, a, k)` are flexibly specified by `fak`.
 
     The `func_loader` is where you specify any validation of func specification and/or how to get a callable from it.
     The default `func_loader` will produce a callable from a dot path (e.g. `'os.path.join'`),
@@ -143,8 +176,8 @@ def fakit(fak, func_loader=dflt_func_loader):
     Returns: A python object.
 
     >>> fak = {'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']}
-    >>> fakit(fak)
-    'I/am/a/filepath'
+    >>> assert fakit(fak) =='I/am/a/filepath' or fakit(fak) == 'I\am\a\filepath'
+
 
     >>> from inspect import signature
     >>>
@@ -178,4 +211,4 @@ def fakit(fak, func_loader=dflt_func_loader):
 
 fakit.from_dict = fakit_from_dict
 fakit.from_tuple = fakit_from_tuple
-
+fakit.w_func_loader = lambda func_loader: partial(fakit, func_loader=func_loader)
