@@ -150,7 +150,21 @@ the values provide a valid default for them.
 
 How did you do it, you ask?
 
-Well, I used 
+Well, I 
+>>> val_for_argname = {}  # a mapping from argname and val I updated at every "iteration"
+>>> # make a func_to_kwargs from it:
+>>> func_to_kwargs = sse.mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname)
+>>>
+>>> # make a filter function for that func_to_kwargs
+>>> not_covered_by_our_policy = sse.missing_args_func(func_to_kwargs)
+>>>
+>>> # get the next class that's not covered
+>>> not_covered_cls = next(filter(not_covered_by_our_policy, sse.estimator_classes), None)
+>>>
+>>> if not_covered_cls is not None:
+...     from i2.doc_mint import doctest_string_print
+...     doctest_string_print(not_covered_cls)
+>>> # then I read that example code, figured out a valid input, and re-iterated.
 """
 
 estimator_cls_to_kwargs = mk_func_to_kwargs_from_a_val_for_argname_map(estimator_cls_val_for_argname)
