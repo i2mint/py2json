@@ -7,7 +7,7 @@ from py2json.util import mk_func_to_kwargs_from_a_val_for_argname_map
 from sklearn.utils import all_estimators
 from i2.signatures import Sig
 
-estimator_classes = [obj for name, obj in all_estimators()]
+estimator_classes = tuple([obj for name, obj in all_estimators()])
 
 
 def funcs_that_need_args(funcs, func_to_kwargs=None, self_name=None):
@@ -116,7 +116,7 @@ def is_behaviorally_equivalent(obj1, obj2, behavior_func, output_comp=eq):
     ```
 
     Suggestions:
-        output_comp=np.isclose
+        output_comp=np.allclose or np.isclose
     """
     return output_comp(behavior_func(obj1), behavior_func(obj2))
 
@@ -165,7 +165,7 @@ dflt_mk_alt_model = compose(pickle.dumps, pickle.loads)
 
 from sklearn.datasets import make_blobs
 
-_X, _y = make_blobs()
+_X, _y = make_blobs(center_box=(0, 20.0))
 
 
 def dflt_xy_for_learner(learner):
@@ -195,29 +195,70 @@ def behavioral_test_kwargs_for_estimator(
     model = learner.fit(X, y)
     alt_model = mk_alt_model(model)
     for method in methods:
-        yield dict(
-            obj=model,
-            alt_obj=alt_model,
-            behavior_func=partial(getattr(estimator_cls, method), X=X),
-            output_comp=np.isclose)
+        if hasattr(estimator_cls, method):
+            yield dict(
+                obj1=model,
+                obj2=alt_model,
+                behavior_func=partial(getattr(estimator_cls, method), X=X),
+                output_comp=np.allclose)
 
-# def test_estimator(estimator_cls, serializer, deserializer,
-#                    methods=('predict', 'transform'), comp_func=np.isclose):
-#     """Tests a (serializer, deserializer) pair on an estimator_cls.
-#
-#     :param estimator_cls: The estimator class to test for
-#     :param serializer: The serializer
-#     :param deserializer: The deserializer
-#     :param methods: The methods (names) to test for. Must take X as a sufficient input.
-#     :param comp_func: The function to use to compare the output of original and deserialized
-#     :return:
-#     """
-#     X, y, model = xy_and_fitted_model_for_estimator_cls(estimator_cls)
-#
-#     deserialized_model = deserializer(serializer(model))
-#
-#     for method in methods:
-#         if hasattr(estimator_cls, method):
-#             method_func = getattr(estimator_cls, method)
-#             behavior_func = partial(method_func, X=X)
-#             yield method, is_behaviorally_equivalent(model, deserialized_model, behavior_func, comp_func)
+
+from py2json.util import catch_errors
+
+
+def fitting_x_y_works(learner, X, y):
+    try:
+        learner.fit(X, y)
+        return True
+    except Exception as e:
+        return False
+
+
+@catch_errors(on_error=None)
+def cls_to_learner_or_none(cls, init_params_for_cls=init_params_for_cls):
+    return cls(**init_params_for_cls(cls))
+
+
+@catch_errors(on_error=None)
+def fit_or_return_none(learner, X, y):
+    learner.fit(X, y)
+    return learner
+
+
+def fit_learners(learners, X, y, ignore_warnings=True):
+    with warnings.catch_warnings():
+        if ignore_warnings:
+            warnings.simplefilter("ignore")
+        for i, learner in enumerate(learners):
+            try:
+                yield fit_or_return_none(learner, X, y)
+            except Exception as e:
+                print(f"{i}: {learner.__class__.__name__}: {e}")
+                yield None
+
+
+import warnings
+
+
+def test_estimators(estimator_classes=estimator_classes, ignore_warnings=True):
+    with warnings.catch_warnings():
+        if ignore_warnings:
+            warnings.simplefilter("ignore")
+
+        for estimator_cls in estimator_classes:
+            try:
+                for kws in behavioral_test_kwargs_for_estimator(estimator_cls):
+                    try:
+                        if is_behaviorally_equivalent(**kws):
+                            yield dict(kind='ok', cls=estimator_cls)
+                        else:
+                            yield dict(kind='behaviorally different', cls=estimator_cls, kws=kws)
+                    except Exception as e:
+                        yield dict(kind='error_in_test', cls=estimator_cls, kws=kws, error=e)
+            except Exception as e:
+                yield dict(kind='error_making_test_kws', cls=estimator_cls, error=e)
+
+
+def estimator_test_df(estimator_classes=estimator_classes, ignore_warnings=True):
+    import pandas as pd
+    return pd.DataFrame(list(test_estimators(estimator_classes, ignore_warnings)))

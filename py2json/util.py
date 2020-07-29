@@ -91,3 +91,73 @@ def is_valid_kwargs(func, kwargs):
         return True
     except Exception as e:
         return False
+
+
+from inspect import signature
+from functools import wraps
+from i2.signatures import Sig
+import warnings
+
+
+def is_not_none(x):
+    return x is not None
+
+
+def ignore_warnings(func):
+    """Couldn't make this work"""
+    from i2.signatures import Sig
+
+    raise RuntimeError("Couldn't make this work. Don't use!")
+
+    @Sig.from_objs(func, lambda ignore_warnings=True: ...)
+    def _func(*args, ignore_warnings=True, **kwargs):
+        with warnings.catch_warnings():
+            if ignore_warnings:
+                warnings.simplefilter("ignore")
+            return func(*args, **kwargs)
+
+    return _func
+
+
+def catch_errors(errors=(Exception,), on_error=lambda e: print(e)):
+    if not callable(on_error):
+        on_error_val = on_error
+        on_error = lambda e: on_error_val
+    else:
+        nargs = len(signature(on_error).parameters)
+        if nargs > 1:
+            raise ValueError(f"on_error should be a value or callable with 0 or 1 arguments")
+        elif nargs == 0:
+            on_error_func = on_error
+            on_error = lambda e: on_error_func()
+
+    def wrap_func(func):
+        @wraps(func)
+        def func_with_errors_caught(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except errors as e:
+                return on_error(e)
+
+        return func_with_errors_caught
+
+    return wrap_func
+
+
+class Nones:
+    """
+    >>> x, y, z = Nones(3)
+    >>> x, y, z
+    None, None, None
+    >>> bool(Nones(3))
+    False
+    """
+
+    def __init__(self, n_items: int):
+        self.n_items = n_items
+
+    def __iter__(self):
+        return (None for _ in range(self.n_items))
+
+    def __bool__(self):
+        return False
