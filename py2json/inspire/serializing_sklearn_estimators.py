@@ -1,97 +1,8 @@
 from operator import eq
+from functools import partial, wraps
 
 import numpy as np
-
-
-def missing_args_func(func_to_kwargs=None, ignore=None):
-    """Returns a function that returns a set of missing arg names.
-    Missing means that that the arg is required for a func (has no default)
-    and hasn't been found by the func_to_kwargs policy.
-
-    The returned function can be used to diagnose the coverage of the func_to_kwargs policy,
-    or as a filter to find those functions that are not covered by the policy.
-
-    :param func_to_kwargs: Callable that returns valid kwargs for a given func.
-    :param ignore: If not None, should be an iterable to names not to check
-    :return: A missing_args_func that returns a set of arg names that are missing.
-
-    >>> from collections import namedtuple
-    >>> assert missing_args_func()(namedtuple) == {'field_names', 'typename'}
-    >>> func_to_kwargs = lambda f: {namedtuple: {'typename': 'Unspecified'}}.get(f, {})
-    >>>
-    >>> missing_args = missing_args_func(func_to_kwargs)
-    >>> missing_args(namedtuple)
-    {'field_names'}
-    >>> def foo(x=1, y=2): ...  # defaults cover all arguments
-    >>> assert list(filter(missing_args, (namedtuple, foo))) == [namedtuple]
-    """
-
-    def missing_args_func_(func):
-        missing_args = set(Sig(func).without_defaults.parameters) - set(ignore or ())
-        if func_to_kwargs is not None:
-            missing_args -= func_to_kwargs(func).keys()
-        return missing_args
-
-    return missing_args_func_
-
-
-def mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname=None):
-    """Returns a function func_to_kwargs that returns kwargs for a given callable func.
-    The intent being that these kwargs can be used as valid inputs of func as such:
-    ```
-        func(**func_to_kwargs)
-    ```
-
-    Does so by taking the intersection of those arguments of the func that don't have defaults
-    and the input val_for_argname mapping.
-
-    Note that if no val_for_argname is given, or non matches the default-less arguments of func,
-    then {} is returned.
-
-    >>> val_for_argname = {'typename': 'Unspecified', 'x': 0}
-    >>> func_to_kwargs = mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname)
-    >>> missing_args = missing_args_func(func_to_kwargs)
-    >>>
-    >>> from collections import namedtuple
-    >>> def foo(typename, x, y=2): ...
-    >>> def bar(x, z=None): ...
-    >>> assert missing_args(namedtuple) == {'field_names'}
-    >>> assert missing_args(foo) == set()
-    >>> assert missing_args(bar) == set()
-    >>> assert list(filter(missing_args, (namedtuple, foo, bar))) == [namedtuple]
-    """
-    val_for_argname = val_for_argname or {}
-
-    def func_to_kwargs(func):
-        return {k: val_for_argname[k] for k in val_for_argname.keys() & set(Sig(func).without_defaults)}
-
-    return func_to_kwargs
-
-
-def is_valid_kwargs(func, kwargs):
-    """Test if kwargs constitute a valid input for func simply by trying func(**kwargs) out.
-
-    :param func: A callable
-    :param kwargs: A dict of keyword arguments
-    :return: True if, and only if `func(**kwargs)` doesn't fail, and False if it does raise an Exception.
-
-    >>> def f(a, b=1):
-    ...     return a * b
-    >>> is_valid_kwargs(f, {'a': 10})
-    True
-    >>> is_valid_kwargs(f, {'a': 1, 'b': 10})
-    True
-    >>> is_valid_kwargs(f, {'b': 2, 'c': 4})  # c is not a valid argument name, so...
-    False
-    >>> is_valid_kwargs(f, {})  # a has no default value, so you need at least that argument, so...
-    False
-    """
-    try:
-        func(**kwargs)
-        return True
-    except Exception as e:
-        return False
-
+from py2json.util import mk_func_to_kwargs_from_a_val_for_argname_map
 
 from sklearn.utils import all_estimators
 from i2.signatures import Sig
@@ -123,7 +34,6 @@ def funcs_that_need_args(funcs, func_to_kwargs=None, self_name=None):
 
 
 from sklearn.decomposition import PCA, TruncatedSVD
-from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import ElasticNetCV
 from sklearn.preprocessing import Normalizer
 from scipy.stats import uniform
@@ -173,16 +83,42 @@ estimator_classes_without_resolved_kwargs = set(funcs_that_need_args(
     estimator_classes, estimator_cls_to_kwargs))
 
 
-def is_behaviorally_equivalent(obj1, obj2, func, output_comp=eq):
+def is_behaviorally_equivalent(obj1, obj2, behavior_func, output_comp=eq):
     """Checks if two objects obj1 and obj2 are behaviorally equivalent,
     according to behavior func (a callable that will be called on the objects) and
     output_comp (the function that will be called on the outputs of these calls to
     decide whether they can be considered equivalent.
 
+    You'll notice that `behavior_func` takes no other input than `obj` (or `other_obj`).
+    Most behaviors depend on other variables you say? We can hardly say that two objects are equivalent
+    if they agree on only one data point you say? Yes, I agree. But `is_behaviorally_equivalent` doesn't rule these out.
+
+    What to do if you want to validate behavioral equivalence like the following?
+    ```python
+    def many_validation_pts():
+        for x, y, z in some_large_set_of_xyz_combinations:
+            yield output_comp(behavior_func(x, y, obj, z), behavior_func(x, y, other_obj, z))
+    assert(all(many_validation_pts()))
+    ```
+
+    Well, instead of loading the `is_behaviorally_equivalent` with `args`, `kwargs`, and `argname_of_obj`
+    to be able to acheive the above, we simply ask the user to encompass it all in the provided `behavior_func` itself,
+    using standard tools such as `functools.partial` or custom decorators.
+    For example:
+
+    ```python
+    from functools import partial
+    def many_validation_pts():
+        for x, y, z in some_large_set_of_xyz_combinations:
+            _behavior_func = partial(behavior_func, x=x, y=y, z=z)
+            yield is_behaviorally_equivalent(obj, other_obj, _behavior_func, output_comp)
+    assert(all(many_validation_pts()))
+    ```
+
     Suggestions:
         output_comp=np.isclose
     """
-    return output_comp(func(obj1), func(obj2))
+    return output_comp(behavior_func(obj1), behavior_func(obj2))
 
 
 def init_params_for_cls(estimator_cls):
@@ -211,13 +147,77 @@ def xy_and_fitted_model_for_estimator_cls(estimator_cls):
     return X, y, learner.fit(X, y)  # assuming sklearn style
 
 
-def test_estimator(estimator_cls, serializer, deserializer,
-                   methods=('predict', 'transform'), comp_func=np.isclose):
-    X, y, model = xy_and_fitted_model_for_estimator_cls(estimator_cls)
+def compose(func1, func2):
+    sig1 = Sig(func1)
+    sig2 = Sig(func2)
 
-    deserialized_model = deserializer(serializer(model))
+    @sig1
+    def composed_funcs(*args, **kwargs):
+        return func2(func1(*args, **kwargs))
 
+    composed_funcs.__return_annotation__ = sig2.return_annotation
+    return composed_funcs
+
+
+import pickle
+
+dflt_mk_alt_model = compose(pickle.dumps, pickle.loads)
+
+from sklearn.datasets import make_blobs
+
+_X, _y = make_blobs()
+
+
+def dflt_xy_for_learner(learner):
+    """Returns some random (but fixed after first import) (X, y) pair, insensitive to the learner"""
+    return _X, _y
+
+
+def behavioral_test_kwargs_for_estimator(
+        estimator_cls,
+        init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
+        xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
+        mk_alt_model=dflt_mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
+        methods=('predict', 'transform')  # The methods to use to make behavior_funcs
+):
+    """Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`
+
+    :param estimator_cls:
+    :param init_params_for_cls: Returns valid params to initialize an estimator_cls
+    :param xy_for_learner: Returns an (X, y) pair for the learner to fit on
+    :param mk_alt_obj: Returns an alt object by serializing and deserializing the fitted model
+    :param methods: The methods to use to make behavior_funcs
+    :return Generator of (obj, alt_obj, behavior_func, output_comp) tuples
+    """
+    estimator_params = init_params_for_cls(estimator_cls)
+    learner = estimator_cls(**estimator_params)
+    X, y = xy_for_learner(learner)
+    model = learner.fit(X, y)
+    alt_model = mk_alt_model(model)
     for method in methods:
-        if hasattr(estimator_cls, method):
-            method_func = getattr(estimator_cls, method)
-            yield method, is_behaviorally_equivalent(model, deserialized_model, method_func, comp_func)
+        yield dict(
+            obj=model,
+            alt_obj=alt_model,
+            behavior_func=partial(getattr(estimator_cls, method), X=X),
+            output_comp=np.isclose)
+
+# def test_estimator(estimator_cls, serializer, deserializer,
+#                    methods=('predict', 'transform'), comp_func=np.isclose):
+#     """Tests a (serializer, deserializer) pair on an estimator_cls.
+#
+#     :param estimator_cls: The estimator class to test for
+#     :param serializer: The serializer
+#     :param deserializer: The deserializer
+#     :param methods: The methods (names) to test for. Must take X as a sufficient input.
+#     :param comp_func: The function to use to compare the output of original and deserialized
+#     :return:
+#     """
+#     X, y, model = xy_and_fitted_model_for_estimator_cls(estimator_cls)
+#
+#     deserialized_model = deserializer(serializer(model))
+#
+#     for method in methods:
+#         if hasattr(estimator_cls, method):
+#             method_func = getattr(estimator_cls, method)
+#             behavior_func = partial(method_func, X=X)
+#             yield method, is_behaviorally_equivalent(model, deserialized_model, behavior_func, comp_func)
