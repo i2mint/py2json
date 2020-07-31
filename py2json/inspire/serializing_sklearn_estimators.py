@@ -178,7 +178,8 @@ def behavioral_test_kwargs_for_estimator(
         init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
         xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
         mk_alt_model=dflt_mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
-        methods=('predict', 'transform')  # The methods to use to make behavior_funcs
+        methods=('predict', 'transform'),  # The methods to use to make behavior_funcs,
+        output_comp=np.allclose
 ):
     """Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`
 
@@ -196,11 +197,12 @@ def behavioral_test_kwargs_for_estimator(
     alt_model = mk_alt_model(model)
     for method in methods:
         if hasattr(estimator_cls, method):
+            method_func = getattr(estimator_cls, method)
             yield dict(
                 obj1=model,
                 obj2=alt_model,
-                behavior_func=partial(getattr(estimator_cls, method), X=X),
-                output_comp=np.allclose)
+                behavior_func=partial(method_func, X=X),
+                output_comp=output_comp)
 
 
 from py2json.util import catch_errors
@@ -240,25 +242,49 @@ def fit_learners(learners, X, y, ignore_warnings=True):
 import warnings
 
 
-def test_estimators(estimator_classes=estimator_classes, ignore_warnings=True):
+class ReprControlledTuple(tuple):
+    def __repr__(self):
+        t = super().__repr__()
+        n = len(t)
+        if n > 100:
+            return f"{t[:100]}... ({len(self)} elements)"
+        else:
+            return t
+
+
+def test_estimators(estimator_classes=estimator_classes,
+                    ignore_warnings=True,
+                    **kwargs_for_behavioral_test_kwargs_for_estimator):
     with warnings.catch_warnings():
         if ignore_warnings:
             warnings.simplefilter("ignore")
 
         for estimator_cls in estimator_classes:
             try:
-                for kws in behavioral_test_kwargs_for_estimator(estimator_cls):
+                for kws in behavioral_test_kwargs_for_estimator(estimator_cls,
+                                                                **kwargs_for_behavioral_test_kwargs_for_estimator):
                     try:
                         if is_behaviorally_equivalent(**kws):
                             yield dict(kind='ok', cls=estimator_cls)
                         else:
-                            yield dict(kind='behaviorally different', cls=estimator_cls, kws=kws)
+                            yield dict(kind='behaviorally_different', cls=estimator_cls, kws=kws)
                     except Exception as e:
                         yield dict(kind='error_in_test', cls=estimator_cls, kws=kws, error=e)
             except Exception as e:
                 yield dict(kind='error_making_test_kws', cls=estimator_cls, error=e)
 
 
-def estimator_test_df(estimator_classes=estimator_classes, ignore_warnings=True):
+def estimator_test_df(estimator_classes=estimator_classes,
+                      ignore_warnings=True,
+                      **kwargs_for_behavioral_test_kwargs_for_estimator
+                      ):
     import pandas as pd
-    return pd.DataFrame(list(test_estimators(estimator_classes, ignore_warnings)))
+    return pd.DataFrame(list(test_estimators(estimator_classes,
+                                             ignore_warnings,
+                                             **kwargs_for_behavioral_test_kwargs_for_estimator)))
+
+
+def get_estimator_classes_that_are_behaviorally_equivalent_wrt_pickle():
+    df = estimator_test_df()
+    ok_to_test_classes = tuple(df[df['kind'] == 'ok']['cls'].values)
+    len(ok_to_test_classes)
