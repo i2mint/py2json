@@ -42,6 +42,21 @@ def dotpath_to_obj(dotpath: str):
         return importlib.import_module(obj_name)
 
 
+def func_to_dotpath(func):
+    """
+    >>> from inspect import Signature
+    >>> func_to_dotpath(Signature.replace)
+    'inspect.Signature.replace'
+    >>> func_to_dotpath(func_to_dotpath)  # note that here, it's not a "full path"
+    'fakit.func_to_dotpath'
+
+    func_to_dotpath is the inverse of dotpath_to_func
+    >>> assert dotpath_to_func(func_to_dotpath(Signature.replace)) == Signature.replace
+
+    """
+    return '.'.join((func.__module__, func.__qualname__))
+
+
 def dotpath_to_func(f: str) -> callable:
     """Loads and returns the function referenced by f,
     which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one.
@@ -55,13 +70,17 @@ def dotpath_to_func(f: str) -> callable:
     >>>
     >>> # and just for fun...
     >>> assert signature(dotpath_to_func('inspect.signature')) == signature(signature)
+
+    dotpath_to_func is the inverse of func_to_dotpath
+    >>> assert dotpath_to_func(func_to_dotpath(signature)) == signature
+
     """
 
-    assert isinstance(f, str) and '.' in f, f"Must be a string with at least one dot in the dot path: {f}"
-    *module_path, func_name = f.split('.')
-    f = getattr(importlib.import_module('.'.join(module_path)), func_name)
-    return assert_callable(f)
-
+    first, *remaining = f.split('.')
+    obj = importlib.import_module(first)  # assume it's a module
+    for item in remaining:
+        obj = getattr(obj, item)
+    return assert_callable(obj)
 
 def compose(*functions):
     """Make a function that is the composition of the input functions"""
@@ -91,7 +110,7 @@ def _fakit(f: callable, a: (tuple, list), k: dict):
     return f(*(a or ()), **(k or {}))  # slightly protected form of f(*a, **k)
 
 
-def fakit_from_dict(d, func_loader=assert_callable):
+def fakit_from_dict(d, func_loader=dflt_func_loader):
     """Execute `f(*a, **k)` where `f`, `a`, and `k` are specified in a dict with those fields.
 
     This function does two things for you:
@@ -203,7 +222,10 @@ def fakit(fak, func_loader=dflt_func_loader):
     """
 
     if isinstance(fak, dict):
-        return fakit_from_dict(fak, func_loader=func_loader)
+        if FAK in fak:
+            return fakit(fak[FAK])
+        else:
+            return fakit_from_dict(fak, func_loader=func_loader)
     else:
         assert isinstance(fak, (tuple, list)), "fak should be dict, tuple, or list"
         return fakit_from_tuple(fak, func_loader=func_loader)
