@@ -21,15 +21,11 @@ def mk_isinstance_cond(*types):
 
 
 def mk_scan_map(condition_map, dflt=None):
-    if not callable(dflt):
-        dflt_val = dflt
-        dflt = lambda x: dflt_val
-
     def scan_mapping(x):
         for condition, then in condition_map.items():
             if condition(x):
                 return then
-        return dflt(x)
+        return dflt
 
     return scan_mapping
 
