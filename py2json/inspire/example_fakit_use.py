@@ -100,27 +100,34 @@ assert all(fak_deserialize(serialized_df) == df)
 class GenericEstimator(Struct):
     fit = None  # or sklearn will complain
 
-
 from functools import partial
 
 my_serializer = partial(serialized_attr_dict, serializer=fak_serialize)
 my_deserializer = partial(deserialize_as_obj, deserializer=fak_deserialize, cls=GenericEstimator)
 
+# make something to serialize
 from sklearn.decomposition import PCA
 from sklearn.datasets import make_blobs
 
 X, y = make_blobs()
-
 pca = PCA().fit(X)
 
-jdict = my_serializer(pca, attrs=('components_', 'mean_', 'whiten'))
+# figure out what attributes we need for a target function:
+from i2.footprints import attrs_used_by_method
+
+target_func = PCA.transform
+
+needed_attrs = [a for a in attrs_used_by_method(target_func) if hasattr(pca, a)]
+
+jdict = my_serializer(pca, attrs=needed_attrs)
+
+# verify jdict is json friendly
 import json
 
-json.loads(json.dumps(jdict))  # to make sure jdict is json friendly
+json.loads(json.dumps(jdict))
 
-# Does the deserialized version "work" (for the transform method)?
-
+# Does the deserialized version "work" (for the target function)?
 obj = my_deserializer(jdict)
-assert (PCA.transform(obj, X) == PCA.transform(pca, X)).all()
+assert (target_func(obj, X) == target_func(pca, X)).all()
 # and in case you forgot the equivalence:
-assert (pca.transform(X) == PCA.transform(pca, X)).all()
+assert (pca.transform(X) == target_func(pca, X)).all()
