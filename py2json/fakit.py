@@ -234,3 +234,10 @@ def fakit(fak, func_loader=dflt_func_loader):
 fakit.from_dict = fakit_from_dict
 fakit.from_tuple = fakit_from_tuple
 fakit.w_func_loader = lambda func_loader: partial(fakit, func_loader=func_loader)
+
+
+def fakit_if_marked_for_it(x, func_loader=dflt_func_loader):
+    if isinstance(x, dict) and FAK in x:
+        return fakit(x[FAK])
+    else:
+        return x
