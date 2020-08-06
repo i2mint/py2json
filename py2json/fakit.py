@@ -174,52 +174,6 @@ def extract_and_load(fak, func_loader=dflt_func_loader):
     return f, a, k
 
 
-def fakit_from_dict(fak, func_loader=dflt_func_loader):
-    """Execute `f(*a, **k)` where `f`, `a`, and `k` are specified in a dict with those fields.
-
-    This function does two things for you:
-    - grabs the `(f, a, k)` triple from a `dict` (where both `'a'` and `'k'` are optional)
-    - gives the user control over how the `f` specification resolves to a callable.
-
-    """
-    return _fakit(*extract_and_load(fak, func_loader))
-
-
-def fakit_from_tuple(fak: (tuple, list), func_loader: callable = dflt_func_loader):
-    """In this one you specify the `fak` with a tuple (or list).
-
-    You always have to specify a function as the first element of a list (and if you can call it without arguments,
-    that's all you need).
-
-    fakit_from_tuple(['builtins.list'])
-
-    But as far as arguments are concerned, you can use a tuple or list
-    (which will be understood to be the positional arguments (`*a`)):
-
-    >>> A = fakit_from_tuple(['collections.namedtuple', ('A', 'x y z')])
-    >>> A('no', 'defaults', 'here')
-    A(x='no', y='defaults', z='here')
-
-    ... you can also use a dict (which will be understood to be the keyword arguments (`**k`)):
-
-    >>> A = fakit_from_tuple(['collections.namedtuple', {'typename': 'A', 'field_names': 'x y z'}])
-    >>> A('no', 'defaults', 'here')
-    A(x='no', y='defaults', z='here')
-
-    ... or both:
-
-    >>> A = fakit_from_tuple(['collections.namedtuple', ('A', 'x y z'), {'defaults': ('has', 'defaults')}])
-    >>> A('this one')
-    A(x='this one', y='has', z='defaults')
-
-    :param fak: A tuple or list
-    :param func_loader: A function that will resolve the function to be called
-    :return: What ever the function, called on the given arguments, will return.
-
-    """
-    return _fakit(*extract_and_load(fak, func_loader))
-
-
 def fakit(fak, func_loader=dflt_func_loader):
     """Execute a fak with given (f, a, k) tuple or {f: f, a: a, k: k} dict, and a function loader.
 
