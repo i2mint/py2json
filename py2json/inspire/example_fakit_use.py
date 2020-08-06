@@ -58,7 +58,7 @@ def deserialize_as_obj(attr_dict, deserializer, cls=Struct):
 ##### Use #####################################################################################
 import numpy
 import pandas
-from py2json.fakit import fakit_if_marked_for_it
+from py2json.fakit import refakit
 
 # TODO: much to factor out into a mini-language here
 # TODO: See how the specs complexify if we want to use orient='records' kw in DataFrame (de)serialization
@@ -76,7 +76,7 @@ type_conds = {mk_isinstance_cond(types): func for types, func in type_cond_map.i
 serializer_for_type = mk_scan_map(type_conds, dflt=lambda x: x)
 
 fak_serialize = lambda obj: serializer_for_type(obj)(obj)
-fak_deserialize = fakit_if_marked_for_it
+fak_deserialize = refakit
 
 arr = numpy.array([1, 2, 3])
 serialized_arr = fak_serialize(arr)

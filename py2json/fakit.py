@@ -82,6 +82,7 @@ def dotpath_to_func(f: str) -> callable:
         obj = getattr(obj, item)
     return assert_callable(obj)
 
+
 def compose(*functions):
     """Make a function that is the composition of the input functions"""
     return reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
@@ -95,6 +96,8 @@ def dflt_func_loader(f) -> callable:
         return f
     elif isinstance(f, str):
         return dotpath_to_func(f)
+    elif isinstance(f, dict) and len(f) == 1 and FAK in f:
+        return fakit(f[FAK])
     else:
         return compose(*map(dflt_func_loader, f))
 
@@ -110,7 +113,68 @@ def _fakit(f: callable, a: (tuple, list), k: dict):
     return f(*(a or ()), **(k or {}))  # slightly protected form of f(*a, **k)
 
 
-def fakit_from_dict(d, func_loader=dflt_func_loader):
+def extract_fak(fak):
+    """Extracts the (raw) (f, a, k) triple from a dict or tuple/list fak.
+    Also asserts the validity of input fak.
+
+    >>> extract_fak(('func', (1, 2), {'keyword': 3}))
+    ('func', (1, 2), {'keyword': 3})
+
+    If fak has only two input items and the second is a dict, the second output will be an empty tuple.
+    >>> extract_fak(('func', {'keyword': 3}))
+    ('func', (), {'keyword': 3})
+
+    If fak has only two input items and the second is a tuple, the second output will be an empty dict.
+    >>> extract_fak(['func', (1, 2)])
+    ('func', (1, 2), {})
+
+    If you only have only one element in your list/tuple input...
+    >>> extract_fak(['func'])
+    ('func', (), {})
+
+    If your input is a dict
+    >>> extract_fak({'f': 'func', 'a': (1, 2), 'k': {'keyword': 3}})
+    ('func', (1, 2), {'keyword': 3})
+    >>> extract_fak({'f': 'func', 'k': {'keyword': 3}})
+    ('func', (), {'keyword': 3})
+    >>> extract_fak({'f': 'func', 'a': (1, 2)})
+    ('func', (1, 2), {})
+    """
+    if isinstance(fak, dict):
+        if 'f' not in fak:
+            raise ValueError(f"There needs to be an `f` key, was not: {fak}")
+        return fak['f'], fak.get('a', ()), fak.get('k', {})
+    else:
+        assert isinstance(fak, (tuple, list)), f"fak should be dict, tuple, or list, was not: {fak}"
+        assert len(fak) >= 1, f"fak should have at least one element (the function component): {fak}"
+        f = fak[0]
+        a = ()
+        k = {}
+        assert len(fak) in {1, 2, 3}, "A tuple fak must be of length 1, 2, or 3. No more, no less."
+        if len(fak) > 1:
+            if isinstance(fak[1], dict):
+                k = fak[1]
+            else:
+                assert isinstance(fak[1], (tuple, list)), "argument specs should be dict, tuple, or list"
+                a = fak[1]
+            if len(fak) > 2:
+                if isinstance(fak[2], dict):
+                    assert not k, "can only have one kwargs"
+                    k = fak[2]
+                else:
+                    assert isinstance(fak[2], (tuple, list)), "argument specs should be dict, tuple, or list"
+                    assert not a, "can only have one args"
+                    a = fak[2]
+        return f, a, k
+
+
+def extract_and_load(fak, func_loader=dflt_func_loader):
+    f, a, k = extract_fak(fak)
+    f = func_loader(f)
+    return f, a, k
+
+
+def fakit_from_dict(fak, func_loader=dflt_func_loader):
     """Execute `f(*a, **k)` where `f`, `a`, and `k` are specified in a dict with those fields.
 
     This function does two things for you:
@@ -118,10 +182,10 @@ def fakit_from_dict(d, func_loader=dflt_func_loader):
     - gives the user control over how the `f` specification resolves to a callable.
 
     """
-    return _fakit(func_loader(d['f']), a=d.get('a', ()), k=d.get('k', {}))
+    return _fakit(*extract_and_load(fak, func_loader))
 
 
-def fakit_from_tuple(t: (tuple, list), func_loader: callable = dflt_func_loader):
+def fakit_from_tuple(fak: (tuple, list), func_loader: callable = dflt_func_loader):
     """In this one you specify the `fak` with a tuple (or list).
 
     You always have to specify a function as the first element of a list (and if you can call it without arguments,
@@ -148,35 +212,16 @@ def fakit_from_tuple(t: (tuple, list), func_loader: callable = dflt_func_loader)
     >>> A('this one')
     A(x='this one', y='has', z='defaults')
 
-    :param t: A tuple or list
+    :param fak: A tuple or list
     :param func_loader: A function that will resolve the function to be called
     :return: What ever the function, called on the given arguments, will return.
 
-
     """
-    f = func_loader(t[0])
-    a = ()
-    k = {}
-    assert len(t) in {1, 2, 3}, "A tuple fak must be of length 1, 2, or 3. No more, no less."
-    if len(t) > 1:
-        if isinstance(t[1], dict):
-            k = t[1]
-        else:
-            assert isinstance(t[1], (tuple, list)), "argument specs should be dict, tuple, or list"
-            a = t[1]
-        if len(t) > 2:
-            if isinstance(t[2], dict):
-                assert not k, "can only have one kwargs"
-                k = t[2]
-            else:
-                assert isinstance(t[2], (tuple, list)), "argument specs should be dict, tuple, or list"
-                assert not a, "can only have one args"
-                a = t[2]
-    return _fakit(f, a, k)
+    return _fakit(*extract_and_load(fak, func_loader))
 
 
 def fakit(fak, func_loader=dflt_func_loader):
-    """Execute a fak with given f, a, k and function loader.
+    """Execute a fak with given (f, a, k) tuple or {f: f, a: a, k: k} dict, and a function loader.
 
     Essentially returns `func_loader(f)(*a, **k)` where `(f, a, k)` are flexibly specified by `fak`.
 
@@ -197,6 +242,21 @@ def fakit(fak, func_loader=dflt_func_loader):
     >>> fak = {'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']}
     >>> assert fakit(fak) =='I/am/a/filepath' or fakit(fak) == 'I\am\a\filepath'
 
+    >>> A = fakit(['collections.namedtuple', ('A', 'x y z')])
+    >>> A('no', 'defaults', 'here')
+    A(x='no', y='defaults', z='here')
+
+    ... you can also use a dict (which will be understood to be the keyword arguments (`**k`)):
+
+    >>> A = fakit(['collections.namedtuple', {'typename': 'A', 'field_names': 'x y z'}])
+    >>> A('no', 'defaults', 'here')
+    A(x='no', y='defaults', z='here')
+
+    ... or both:
+
+    >>> A = fakit(['collections.namedtuple', ('A', 'x y z'), {'defaults': ('has', 'defaults')}])
+    >>> A('this one')
+    A(x='this one', y='has', z='defaults')
 
     >>> from inspect import signature
     >>>
@@ -219,25 +279,68 @@ def fakit(fak, func_loader=dflt_func_loader):
     >>> call_func = partial(fakit, func_loader=func_map.get)
     >>> call_func({'f': 'foo', 'a': (1, 10)})
     31
+
+    Common gotcha: Forgetting that `a` is iterpreted as an iterable of function args. For example
+
+    >>> fakit(('builtins.print', 'hello'))  # not correct
+    Traceback (most recent call last):
+      ...
+    AssertionError: argument specs should be dict, tuple, or list
+    >>> fakit(('builtins.print', ['hello']))  # correct
+    hello
+
+    >>> fakit(('builtins.sum', [1, 2, 3]))  # not correct
+    Traceback (most recent call last):
+      ...
+    TypeError: sum() takes at most 2 arguments (3 given)
+    >>> fakit(('builtins.sum', ([1, 2, 3],)))  # correct
+    6
+
     """
-
-    if isinstance(fak, dict):
-        if FAK in fak:
-            return fakit(fak[FAK])
-        else:
-            return fakit_from_dict(fak, func_loader=func_loader)
-    else:
-        assert isinstance(fak, (tuple, list)), "fak should be dict, tuple, or list"
-        return fakit_from_tuple(fak, func_loader=func_loader)
+    if isinstance(fak, dict) and FAK in fak:
+        fak = fak[FAK]
+    return _fakit(*extract_and_load(fak, func_loader))
 
 
-fakit.from_dict = fakit_from_dict
-fakit.from_tuple = fakit_from_tuple
 fakit.w_func_loader = lambda func_loader: partial(fakit, func_loader=func_loader)
 
 
 def fakit_if_marked_for_it(x, func_loader=dflt_func_loader):
     if isinstance(x, dict) and FAK in x:
-        return fakit(x[FAK])
+        return fakit(x[FAK], func_loader)
     else:
         return x
+
+
+def refakit(x, func_loader=dflt_func_loader):
+    """Fakit recursively looking for nested {'$fak': ...} specifications of python objects
+
+    :param x:
+    :param func_loader:
+    :return:
+
+    >>> def prod(a, b):
+    ...     return a * b
+    >>> t = {'$fak': ('builtins.sum', ([1,2,3],))}
+    >>> refakit(t)  # it works with one level
+    6
+    >>> tt = {'$fak': ('__main__.prod', (10, t))}  # it works with two levels (the t is a fak)
+    >>> refakit(tt)
+    60
+
+    TODO: It doesn't work for this situation: ttt = {'$fak': ('builtins.sum', [[t, tt]])}
+        But to work in ALL situations, we need to specify more "enter recursion" cases.
+        Not sure how general we should be out-of-the-box. Perhaps better add some control in args for that.
+
+    See also: `fakit`, the one level only version of `refakit`.
+    """
+    if not isinstance(x, dict) or FAK not in x:
+        return x
+    else:
+        f, a, k = extract_fak(x[FAK])
+
+        # recurse over inputs to see if there's some that are expressed with a $fak dict
+        a = [refakit(aa, func_loader) for aa in a]
+        k = {kk: refakit(vv, func_loader) for kk, vv in k.items()}
+
+        return fakit((f, a, k), func_loader)
