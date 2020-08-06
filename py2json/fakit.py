@@ -10,6 +10,7 @@ Note: "fakit" can be pronounced with the "a" as in "bake" or a
 import os
 import importlib
 from functools import reduce, partial
+from collections.abc import Mapping
 
 FAK = '$fak'
 
@@ -143,7 +144,9 @@ def extract_fak(fak):
     if isinstance(fak, dict):
         if 'f' not in fak:
             raise ValueError(f"There needs to be an `f` key, was not: {fak}")
-        return fak['f'], fak.get('a', ()), fak.get('k', {})
+        f = fak['f']
+        a = fak.get('a', ())
+        k = fak.get('k', {})
     else:
         assert isinstance(fak, (tuple, list)), f"fak should be dict, tuple, or list, was not: {fak}"
         assert len(fak) >= 1, f"fak should have at least one element (the function component): {fak}"
@@ -155,8 +158,8 @@ def extract_fak(fak):
             if isinstance(fak[1], dict):
                 k = fak[1]
             else:
-                assert isinstance(fak[1], (tuple, list)), "argument specs should be dict, tuple, or list"
                 a = fak[1]
+                assert isinstance(a, (tuple, list)), "argument specs should be dict, tuple, or list"
             if len(fak) > 2:
                 if isinstance(fak[2], dict):
                     assert not k, "can only have one kwargs"
@@ -165,7 +168,24 @@ def extract_fak(fak):
                     assert isinstance(fak[2], (tuple, list)), "argument specs should be dict, tuple, or list"
                     assert not a, "can only have one args"
                     a = fak[2]
-        return f, a, k
+
+    assert isinstance(a, (tuple, list)), f"a kind is not a tuple or list: {fak}"
+    assert isinstance(k, Mapping), f"k kind is not a mapping: {fak}"
+    return f, a, k
+
+
+def validate_fak(fak):
+    """Returns the input iff (f, a, k) could be extracted and validated from input fak"""
+    _ = extract_fak(fak)
+    return fak
+
+
+def is_valid_fak(fak):
+    try:
+        validate_fak(fak)
+        return True
+    except Exception:
+        return False
 
 
 def extract_and_load(fak, func_loader=dflt_func_loader):

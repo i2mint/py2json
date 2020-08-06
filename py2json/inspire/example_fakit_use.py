@@ -1,35 +1,9 @@
 ##### Utils #####################################################################################
 ## To be able to do partial with positionals too
-def partial_positionals(func, fix_args, **fix_kwargs):
-    """Like functools.partial, but with positionals as well"""
-
-    def wrapper(*args, **kwargs):
-        arg = iter(args)
-        return func(*(fix_args[i] if i in fix_args else next(arg)
-                      for i in range(len(args) + len(fix_args))),
-                    **{**fix_kwargs, **kwargs})
-
-    return wrapper
 
 
 # Explicit version of partial_positionals(isinstance, {1: types})
-def mk_isinstance_cond(*types):
-    def isinstance_of_target_types(obj):
-        return isinstance(obj, types)
-
-    return isinstance_of_target_types
-
-
-def mk_scan_map(condition_map, dflt=None):
-    def scan_mapping(x):
-        for condition, then in condition_map.items():
-            if condition(x):
-                return then
-        return dflt
-
-    return scan_mapping
-
-
+from py2json.util import mk_isinstance_cond, mk_scan_mapper
 import numpy as np
 
 isinstance_mapping = mk_isinstance_cond(np.ndarray)
@@ -60,6 +34,41 @@ import numpy
 import pandas
 from py2json.fakit import refakit
 
+from py2json.util import is_types_spec, Literal
+from py2json.fakit import is_valid_fak
+from i2.deco import process_output_with
+
+
+@process_output_with(dict)
+def mk_cond_map_from_types_map(types_map):
+    for types, serializer in types_map.items():
+        if is_types_spec(types):
+            types = mk_isinstance_cond(types)
+        assert callable(types), f"types spec should be a callable at this point: {types}"
+        # TODO: Would lead to shorter spec language, but needs "arg injection" of sorts
+        # if isinstance(serializer, (dict, tuple, list)):
+        #     assert is_valid_fak(serializer), f"Should be a valid fak: {serializer}"
+        #     fak_spec = serializer
+        #
+        #     def serializer(x):
+        #         return {'$fak': fak_spec}
+        yield types, serializer
+
+
+def asis(x):
+    return x
+
+
+def mk_serializer_and_deserializer_for_types_map(types_map):
+    cond_map = mk_cond_map_from_types_map(types_map)
+    scan_mapper = mk_scan_mapper(cond_map, dflt=asis)
+
+    def serializer(obj):
+        return scan_mapper(obj)(obj)
+
+    return serializer, refakit
+
+
 # TODO: much to factor out into a mini-language here
 # TODO: See how the specs complexify if we want to use orient='records' kw in DataFrame (de)serialization
 type_cond_map = {
@@ -71,12 +80,7 @@ type_cond_map = {
     }
 }
 
-type_conds = {mk_isinstance_cond(types): func for types, func in type_cond_map.items()}
-
-serializer_for_type = mk_scan_map(type_conds, dflt=lambda x: x)
-
-fak_serialize = lambda obj: serializer_for_type(obj)(obj)
-fak_deserialize = refakit
+fak_serialize, fak_deserialize = mk_serializer_and_deserializer_for_types_map(type_cond_map)
 
 arr = numpy.array([1, 2, 3])
 serialized_arr = fak_serialize(arr)
@@ -99,6 +103,7 @@ assert all(fak_deserialize(serialized_df) == df)
 
 class GenericEstimator(Struct):
     fit = None  # or sklearn will complain
+
 
 from functools import partial
 

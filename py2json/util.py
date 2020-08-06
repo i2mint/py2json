@@ -1,6 +1,12 @@
 from i2.routing_forest import *
 from i2.footprints import *
 from i2.signatures import Sig
+from dataclasses import dataclass
+
+
+@dataclass
+class Literal:
+    obj: object
 
 
 def missing_args_func(func_to_kwargs=None, ignore=None):
@@ -161,3 +167,75 @@ class Nones:
 
     def __bool__(self):
         return False
+
+
+def partial_positionals(func, fix_args, **fix_kwargs):
+    """Like functools.partial, but with positionals as well"""
+
+    def wrapper(*args, **kwargs):
+        arg = iter(args)
+        return func(*(fix_args[i] if i in fix_args else next(arg)
+                      for i in range(len(args) + len(fix_args))),
+                    **{**fix_kwargs, **kwargs})
+
+    return wrapper
+
+
+def is_types_spec(types) -> bool:
+    """Returns True iff input types is a type or an iterable of types"""
+    if isinstance(types, type):
+        types = (types,)
+    try:
+        return len(types) > 0 and all(isinstance(x, type) for x in types)
+    except Exception:
+        return False
+
+
+def mk_isinstance_cond(types) -> Callable[[Any], bool]:
+    """Makes a boolean function that verifies if objects are of a target type (or types)"""
+
+    assert is_types_spec(types), f"types need to be a single or an iterable of types"
+
+    def isinstance_of_target_types(obj):
+        return isinstance(obj, types)
+
+    return isinstance_of_target_types
+
+
+def mk_scan_mapper(condition_map, dflt=None):
+    """Make function implementing an if/elif/.../else logic from a {bool_func: x, ...} map"""
+
+    def scan_mapping(x):
+        for condition, then in condition_map.items():
+            if condition(x):
+                return then
+        return dflt
+
+    return scan_mapping
+
+
+def types_to_cond(types_map):
+    """Convert a {type(s): x, ...} map into a {is_of_that_type: x, ...} map"""
+    return {mk_isinstance_cond(types): x for types, x in types_map.items()}
+
+
+def types_map_to_scan_mapper(types_map, dflt=None):
+    """Make function implementing an if/elif/.../else logic from a {type(s): x, ...} map.
+    The returned mapper will be such that `mapper(obj)` will return a value x
+    according to the first `isinstance(obj, types)` check that is found in {types: x, ...}
+    types_map.
+
+    >>> mapper = types_map_to_scan_mapper({dict: 'a dict!', (list, tuple): 'list-like'},
+    ...     dflt='nothing found')
+    >>> mapper({'a': 'dict'})
+    'a dict!'
+    >>> mapper((1, 2, 3))
+    'list-like'
+    >>> mapper(['a', 'list'])
+    'list-like'
+    >>> mapper(lambda x: x)  # a function: No match for that!
+    'nothing found'
+    >>> mapper(mapper)
+    'nothing found'
+    """
+    return mk_scan_mapper(types_to_cond(types_map), dflt)
