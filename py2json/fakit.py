@@ -35,29 +35,33 @@ def assert_callable(f: callable) -> callable:
 
 def dotpath_to_obj(dotpath: str):
     """Loads and returns the object referenced by the string DOTPATH_TO_MODULE.OBJ_NAME"""
-    *module_path, obj_name = dotpath.split('.')
-    if len(module_path) > 0:
-        return getattr(importlib.import_module('.'.join(module_path)), obj_name)
-    else:
-        return importlib.import_module(obj_name)
+    first, *remaining = dotpath.split('.')
+    obj = importlib.import_module(first)  # assume it's a module
+    for item in remaining:
+        obj = getattr(obj, item)
+    return obj
 
 
-def func_to_dotpath(func):
+def obj_to_dotpath(obj):
     """
     >>> from inspect import Signature
-    >>> func_to_dotpath(Signature.replace)
+    >>> obj_to_dotpath(Signature.replace)
     'inspect.Signature.replace'
-    >>> func_to_dotpath(func_to_dotpath)  # note that here, it's not a "full path"
+    >>> obj_to_dotpath(func_to_dotpath)  # note that here, it's not a "full path"
     'fakit.func_to_dotpath'
 
     func_to_dotpath is the inverse of dotpath_to_func
-    >>> assert dotpath_to_func(func_to_dotpath(Signature.replace)) == Signature.replace
+    >>> assert dotpath_to_obj(obj_to_dotpath(Signature.replace)) == Signature.replace
 
     """
-    return '.'.join((func.__module__, func.__qualname__))
+    return '.'.join((obj.__module__, obj.__qualname__))
 
 
-def dotpath_to_func(f: str) -> callable:
+def func_to_dotpath(func: callable) -> str:
+    return obj_to_dotpath(assert_callable(func))
+
+
+def dotpath_to_func(dotpath: str) -> callable:
     """Loads and returns the function referenced by f,
     which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one.
 
@@ -75,11 +79,7 @@ def dotpath_to_func(f: str) -> callable:
     >>> assert dotpath_to_func(func_to_dotpath(signature)) == signature
 
     """
-
-    first, *remaining = f.split('.')
-    obj = importlib.import_module(first)  # assume it's a module
-    for item in remaining:
-        obj = getattr(obj, item)
+    obj = dotpath_to_obj(dotpath)
     return assert_callable(obj)
 
 
