@@ -9,8 +9,10 @@ Note: "fakit" can be pronounced with the "a" as in "bake" or a
 """
 import os
 import importlib
-from functools import reduce, partial
+from functools import partial
 from collections.abc import Mapping
+
+from py2json.util import compose
 
 FAK = '$fak'
 
@@ -82,11 +84,6 @@ def dotpath_to_func(dotpath: str) -> callable:
     """
     obj = dotpath_to_obj(dotpath)
     return assert_callable(obj)
-
-
-def compose(*functions):
-    """Make a function that is the composition of the input functions"""
-    return reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
 
 
 def dflt_func_loader(f) -> callable:

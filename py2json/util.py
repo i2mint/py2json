@@ -100,7 +100,7 @@ def is_valid_kwargs(func, kwargs):
 
 
 from inspect import signature
-from functools import wraps
+from functools import wraps, reduce
 from i2.signatures import Sig
 import warnings
 
@@ -239,3 +239,8 @@ def types_map_to_scan_mapper(types_map, dflt=None):
     'nothing found'
     """
     return mk_scan_mapper(types_to_cond(types_map), dflt)
+
+
+def compose(*functions):
+    """Make a function that is the composition of the input functions"""
+    return reduce(lambda f, g: lambda x: f(g(x)), functions, lambda x: x)
