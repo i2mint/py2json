@@ -7,14 +7,14 @@ from py2json.util import mk_func_to_kwargs_from_a_val_for_argname_map
 from sklearn.utils import all_estimators
 from i2.signatures import Sig
 
-estimator_classes = tuple([obj for name, obj in all_estimators()])
+all_estimator_classes = tuple([obj for name, obj in all_estimators()])
 
 
 def funcs_that_need_args(funcs, func_to_kwargs=None, self_name=None):
     """
     >>> from sklearn.utils import all_estimators
     >>> estimator_classes = [obj for name, obj in all_estimators()]
-    >>> estimator_names = list(map(lambda x: x.__name__, funcs_that_need_args(estimator_classes)))
+    >>> estimator_names = list(map(lambda x: x.__name__, funcs_that_need_args(all_estimator_classes)))
     >>> expected = [
     ... 'ClassifierChain', 'ColumnTransformer', 'FeatureUnion', 'GridSearchCV', 'MultiOutputClassifier',
     ... 'MultiOutputRegressor', 'OneVsOneClassifier', 'OneVsRestClassifier', 'OutputCodeClassifier',
@@ -80,7 +80,7 @@ Well, I
 estimator_cls_to_kwargs = mk_func_to_kwargs_from_a_val_for_argname_map(estimator_cls_val_for_argname)
 
 estimator_classes_without_resolved_kwargs = set(funcs_that_need_args(
-    estimator_classes, estimator_cls_to_kwargs))
+    all_estimator_classes, estimator_cls_to_kwargs))
 
 
 def is_behaviorally_equivalent(obj1, obj2, behavior_func, output_comp=eq):
@@ -190,10 +190,7 @@ def behavioral_test_kwargs_for_estimator(
     :param methods: The methods to use to make behavior_funcs
     :return Generator of (obj, alt_obj, behavior_func, output_comp) tuples
     """
-    estimator_params = init_params_for_cls(estimator_cls)
-    learner = estimator_cls(**estimator_params)
-    X, y = xy_for_learner(learner)
-    model = learner.fit(X, y)
+    model, X, y = model_X_y(estimator_cls, init_params_for_cls, xy_for_learner)
     alt_model = mk_alt_model(model)
     for method in methods:
         if hasattr(estimator_cls, method):
@@ -203,6 +200,14 @@ def behavioral_test_kwargs_for_estimator(
                 obj2=alt_model,
                 behavior_func=partial(method_func, X=X),
                 output_comp=output_comp)
+
+
+def model_X_y(estimator_cls, init_params_for_cls, xy_for_learner):
+    estimator_params = init_params_for_cls(estimator_cls)
+    learner = estimator_cls(**estimator_params)
+    X, y = xy_for_learner(learner)
+    model = learner.fit(X, y)
+    return model, X, y
 
 
 from py2json.util import catch_errors
@@ -252,9 +257,32 @@ class ReprControlledTuple(tuple):
             return t
 
 
-def test_estimators(estimator_classes=estimator_classes,
+def model_X_y_gen(estimator_classes=None,
+                  init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
+                  xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
+                  on_error='raise'
+                  ):
+    if estimator_classes is None:
+        estimator_classes = all_estimator_classes
+    for cls in estimator_classes:
+        try:
+            yield model_X_y(cls, init_params_for_cls, xy_for_learner)
+        except Exception as e:
+            if on_error == 'raise':
+                raise
+            elif on_error == 'ignore':
+                continue
+            elif on_error == 'yield_context':
+                dict(kind='error_in_model_X_y', cls=cls, error=e)
+            else:
+                raise ValueError(f"Unrecognized on_error: {on_error}")
+
+
+def test_estimators(estimator_classes=None,
                     ignore_warnings=True,
                     **kwargs_for_behavioral_test_kwargs_for_estimator):
+    if estimator_classes is None:
+        estimator_classes = all_estimator_classes
     with warnings.catch_warnings():
         if ignore_warnings:
             warnings.simplefilter("ignore")
@@ -274,11 +302,13 @@ def test_estimators(estimator_classes=estimator_classes,
                 yield dict(kind='error_making_test_kws', cls=estimator_cls, error=e)
 
 
-def estimator_test_df(estimator_classes=estimator_classes,
+def estimator_test_df(estimator_classes=None,
                       ignore_warnings=True,
                       **kwargs_for_behavioral_test_kwargs_for_estimator
                       ):
     import pandas as pd
+    if estimator_classes is None:
+        estimator_classes = all_estimator_classes
     return pd.DataFrame(list(test_estimators(estimator_classes,
                                              ignore_warnings,
                                              **kwargs_for_behavioral_test_kwargs_for_estimator)))
@@ -288,3 +318,6 @@ def get_estimator_classes_that_are_behaviorally_equivalent_wrt_pickle():
     df = estimator_test_df()
     ok_to_test_classes = tuple(df[df['kind'] == 'ok']['cls'].values)
     len(ok_to_test_classes)
+
+
+from py2json.inspire.example_fakit_use import mk_serializer_and_deserializer_from_instance_and_methods

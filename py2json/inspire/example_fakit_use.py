@@ -36,10 +36,10 @@ from py2json.fakit import refakit
 
 from py2json.util import is_types_spec, Literal
 from py2json.fakit import is_valid_fak
-from i2.deco import process_output_with
+from i2.deco import postprocess, preprocess
 
 
-@process_output_with(dict)
+@postprocess(dict)
 def mk_cond_map_from_types_map(types_map):
     for types, serializer in types_map.items():
         if is_types_spec(types):
@@ -105,34 +105,127 @@ class GenericEstimator(Struct):
     fit = None  # or sklearn will complain
 
 
-from functools import partial
+from functools import partial, wraps
+from i2.footprints import attrs_used_by_method
+import json
 
-my_serializer = partial(serialized_attr_dict, serializer=fak_serialize)
-my_deserializer = partial(deserialize_as_obj, deserializer=fak_deserialize, cls=GenericEstimator)
+
+# def jsonize_output(func):
+#     @wraps(func)
+#     def wrapper(x):
+#         try:
+#             json.dumps()
+
+def mk_serializer_and_deserializer_from_instance_and_methods(
+        instance,
+        methods,
+        deserialize_to_cls=None,
+        jsonize=True
+):
+    cls = instance.__class__
+    cls_has_attr = lambda a: hasattr(cls, a)
+    instance_has_attr = lambda a: hasattr(instance, a)
+
+    @postprocess(set)
+    def get_needed_attrs():
+        for method in filter(cls_has_attr, methods):
+            target_func = getattr(cls, method)
+            for attr in filter(instance_has_attr, attrs_used_by_method(target_func)):
+                yield attr
+
+    deserialize_to_cls = deserialize_to_cls or cls
+    serializer = partial(serialized_attr_dict, serializer=fak_serialize, attrs=get_needed_attrs())
+    deserializer = partial(deserialize_as_obj, deserializer=fak_deserialize, cls=deserialize_to_cls)
+
+    if jsonize:
+        serializer = postprocess(json.dumps, verbose_error_message=2)(serializer)
+        deserializer = preprocess(json.loads)(deserializer)
+
+    return serializer, deserializer
+
+
+#
+#
+# my_serializer = partial(serialized_attr_dict, serializer=fak_serialize)
+# my_deserializer = partial(deserialize_as_obj, deserializer=fak_deserialize, cls=GenericEstimator)
 
 # make something to serialize
 from sklearn.decomposition import PCA
 from sklearn.datasets import make_blobs
 
 X, y = make_blobs()
-pca = PCA().fit(X)
+model = PCA().fit(X)
 
-# figure out what attributes we need for a target function:
-from i2.footprints import attrs_used_by_method
+serialize, deserialize = mk_serializer_and_deserializer_from_instance_and_methods(
+    model, methods=['predict', 'transform'], deserialize_to_cls=None)
 
-target_func = PCA.transform
+serialized_model = serialize(model)
+deserialized_model = deserialize(serialized_model)
 
-needed_attrs = [a for a in attrs_used_by_method(target_func) if hasattr(pca, a)]
+assert isinstance(serialized_model, str)
+if hasattr(model, 'transform'):
+    target_func = model.__class__.transform
+else:
+    target_func = model.__class__.predict
 
-jdict = my_serializer(pca, attrs=needed_attrs)
+assert numpy.allclose(target_func(deserialized_model, X), target_func(model, X))
 
-# verify jdict is json friendly
-import json
 
-json.loads(json.dumps(jdict))
-
-# Does the deserialized version "work" (for the target function)?
-obj = my_deserializer(jdict)
-assert (target_func(obj, X) == target_func(pca, X)).all()
 # and in case you forgot the equivalence:
-assert (pca.transform(X) == target_func(pca, X)).all()
+# assert (model.transform(X) == target_func(model, X)).all()
+
+
+def mk_serialize_deserialize_pipeline_for_model(model,
+                                                methods=('predict', 'transform'),
+                                                deserialize_to_cls=None):
+    serialize, deserialize = mk_serializer_and_deserializer_from_instance_and_methods(
+        model, methods=methods, deserialize_to_cls=deserialize_to_cls)
+
+    def alt_model(model):
+        return deserialize(serialize(model))
+
+    return alt_model
+
+
+from py2json.inspire.serializing_sklearn_estimators import estimator_test_df
+
+mk_alt_model = lambda model: mk_serialize_deserialize_pipeline_for_model(model)(model)
+
+kwargs_for_behavioral_test_kwargs_for_estimator = dict(
+    mk_alt_model=mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
+    methods=('predict', 'transform'),  # The methods to use to make behavior_funcs,
+)
+
+
+def test_estimators_serialization(estimator_classes=None,
+                                  ignore_warnings=True
+                                  ):
+    return estimator_test_df(estimator_classes,
+                             ignore_warnings=ignore_warnings,
+                             **kwargs_for_behavioral_test_kwargs_for_estimator)
+
+
+def get_estimator_classes_that_are_behaviorally_equivalent_wrt_fakit():
+    df = test_estimators_serialization()
+    ok_to_test_classes = tuple(df[df['kind'] == 'ok']['cls'].values)
+    return ok_to_test_classes
+
+
+if __name__ == '__main__':
+    from collections import Counter
+    import pandas as pd
+    from py2json.inspire.serializing_sklearn_estimators import all_estimator_classes
+
+    n = len(all_estimator_classes)
+    print(f"Testing all {n} estimators...")
+    df = test_estimators_serialization()
+
+    c = Counter(df.kind)
+    print(pd.Series(c).to_string())
+
+    print(f"So {c['ok']}/{n} estimators can be automatically created, "
+          f"fitted, json-serialized, and deserialized to an object that is "
+          f"behaviorally equivalent to the original "
+          f"(as far as predict and transform methods are concerned).")
+    print("\nThese are those methods...\n")
+    print(*[x.__name__ for x in df.cls], sep='\t')
