@@ -21,7 +21,7 @@ extras = dict(
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.7',
     ],
-    install_requires=[  # to get list, can use imports_for.third_party (py2store.ext.module_imports)
+    install_requires=[  # to get list, can use imports_for.third_party (unbox)
     ],
     include_package_data=True,
     zip_safe=False,
