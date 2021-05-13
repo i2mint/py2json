@@ -17,13 +17,15 @@ from py2json.util import compose
 FAK = '$fak'
 
 
-# TODO: Make a config_utils.py module to centralize config tools (configs for access is just one -- serializers another)
+# TODO: Make a config_utils.py module to centralize config tools (configs for access is just one
+#  -- serializers another)
 # TODO: Integrate (external because not standard lib) other safer tools for secrets, such as:
 #  https://github.com/SimpleLegal/pocket_protector
 
 
 def getenv(name, default=None):
-    """Like os.getenv, but removes a suffix \\r character if present (problem with some env var systems)"""
+    """Like os.getenv, but removes a suffix \\r character if present (problem with some env var
+    systems)"""
     v = os.getenv(name, default)
     if v.endswith('\r'):
         return v[:-1]
@@ -46,14 +48,17 @@ def dotpath_to_obj(dotpath: str):
 
 
 def obj_to_dotpath(obj):
-    """
+    """Get the dotpath reference for an object
+
     >>> from inspect import Signature
     >>> obj_to_dotpath(Signature.replace)
     'inspect.Signature.replace'
-    >>> obj_to_dotpath(func_to_dotpath)  # note that here, it's not a "full path"
+    >>> # note that below, it's not a "full path"
+    >>> obj_to_dotpath(func_to_dotpath)[-21:]  # the :21 is because the full string is sys dependent
     'fakit.func_to_dotpath'
 
     func_to_dotpath is the inverse of dotpath_to_func
+
     >>> assert dotpath_to_obj(obj_to_dotpath(Signature.replace)) == Signature.replace
 
     """
@@ -88,7 +93,8 @@ def dotpath_to_func(dotpath: str) -> callable:
 
 def dflt_func_loader(f) -> callable:
     """Loads and returns the function referenced by f,
-    which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one, or a pipeline of these.
+    which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one,
+    or a pipeline of these.
     """
     if callable(f):
         return f
@@ -118,11 +124,13 @@ def extract_fak(fak):
     >>> extract_fak(('func', (1, 2), {'keyword': 3}))
     ('func', (1, 2), {'keyword': 3})
 
-    If fak has only two input items and the second is a dict, the second output will be an empty tuple.
+    If fak has only two input items and the second is a dict, the second output will be an empty
+    tuple.
     >>> extract_fak(('func', {'keyword': 3}))
     ('func', (), {'keyword': 3})
 
-    If fak has only two input items and the second is a tuple, the second output will be an empty dict.
+    If fak has only two input items and the second is a tuple, the second output will be an empty
+    dict.
     >>> extract_fak(['func', (1, 2)])
     ('func', (1, 2), {})
 
@@ -146,7 +154,8 @@ def extract_fak(fak):
         k = fak.get('k', {})
     else:
         assert isinstance(fak, (tuple, list)), f"fak should be dict, tuple, or list, was not: {fak}"
-        assert len(fak) >= 1, f"fak should have at least one element (the function component): {fak}"
+        assert len(
+            fak) >= 1, f"fak should have at least one element (the function component): {fak}"
         f = fak[0]
         a = ()
         k = {}
@@ -162,7 +171,8 @@ def extract_fak(fak):
                     assert not k, "can only have one kwargs"
                     k = fak[2]
                 else:
-                    assert isinstance(fak[2], (tuple, list)), "argument specs should be dict, tuple, or list"
+                    assert isinstance(fak[2], (
+                        tuple, list)), "argument specs should be dict, tuple, or list"
                     assert not a, "can only have one args"
                     a = fak[2]
 
@@ -196,7 +206,8 @@ def fakit(fak, func_loader=dflt_func_loader):
 
     Essentially returns `func_loader(f)(*a, **k)` where `(f, a, k)` are flexibly specified by `fak`.
 
-    The `func_loader` is where you specify any validation of func specification and/or how to get a callable from it.
+    The `func_loader` is where you specify any validation of func specification and/or how to get
+    a callable from it.
     The default `func_loader` will produce a callable from a dot path (e.g. `'os.path.join'`),
     But note that the intended use is for the user to use their own `func_loader`.
     The user should do this, amongst other things:
@@ -205,7 +216,8 @@ def fakit(fak, func_loader=dflt_func_loader):
      that maps function specification to actual function.
 
     Args:
-        fak: A (f, a, k) specification. Could be a tuple or a dict (with 'f', 'a', 'k' keys). All but f are optional.
+        fak: A (f, a, k) specification. Could be a tuple or a dict (with 'f', 'a', 'k' keys). All
+        but f are optional.
         func_loader: A function returning a function.
 
     Returns: A python object.
@@ -283,35 +295,44 @@ def fakit_if_marked_for_it(x, func_loader=dflt_func_loader):
         return x
 
 
-def refakit(x, func_loader=dflt_func_loader):
+inf = float('infinity')
+
+
+def refakit(x, func_loader=dflt_func_loader, max_levels=inf):
     """Fakit recursively looking for nested {'$fak': ...} specifications of python objects
 
     :param x:
     :param func_loader:
     :return:
 
-    >>> def prod(a, b):
-    ...     return a * b
     >>> t = {'$fak': ('builtins.sum', ([1,2,3],))}
     >>> refakit(t)  # it works with one level
     6
-    >>> tt = {'$fak': ('__main__.prod', (10, t))}  # it works with two levels (the t is a fak)
-    >>> refakit(tt)
-    60
 
-    TODO: It doesn't work for this situation: ttt = {'$fak': ('builtins.sum', [[t, tt]])}
-        But to work in ALL situations, we need to specify more "enter recursion" cases.
-        Not sure how general we should be out-of-the-box. Perhaps better add some control in args for that.
+    >>> ttt = {'$fak': ('builtins.sum', ([t, t],))}
+    >>> refakit(ttt)
+    12
+
+    But this recursive interpretation of the the fakit elemnts in [t, t] would not
+    happen if we restricted the max_levels to be 2 for example.
+
+    The max levels is there to be able to specify that the refakit shouldn't go too deep in
+    nested lists (and thus spare some computation.
+    TODO: Perhaps we could include this max_levels as a specification in fakit?
 
     See also: `fakit`, the one level only version of `refakit`.
     """
-    if not isinstance(x, dict) or FAK not in x:
+    if max_levels == 0:
         return x
-    else:
+    if isinstance(x, dict) and FAK in x:
         f, a, k = extract_fak(x[FAK])
 
         # recurse over inputs to see if there's some that are expressed with a $fak dict
-        a = [refakit(aa, func_loader) for aa in a]
-        k = {kk: refakit(vv, func_loader) for kk, vv in k.items()}
+        a = [refakit(aa, func_loader, max_levels - 1) for aa in a]
+        k = {kk: refakit(vv, func_loader, max_levels - 1) for kk, vv in k.items()}
 
         return fakit((f, a, k), func_loader)
+    elif isinstance(x, list):
+        return [refakit(xx, func_loader, max_levels - 1) for xx in x]
+    else:
+        return x

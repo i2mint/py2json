@@ -1,4 +1,4 @@
-from py2store.utils.glom import glom, Spec
+from glom import glom, Spec
 import importlib
 
 

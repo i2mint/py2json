@@ -154,7 +154,7 @@ class Nones:
     """
     >>> x, y, z = Nones(3)
     >>> x, y, z
-    None, None, None
+    (None, None, None)
     >>> bool(Nones(3))
     False
     """

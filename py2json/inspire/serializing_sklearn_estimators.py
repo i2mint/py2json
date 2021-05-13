@@ -1,3 +1,6 @@
+"""
+Functions to automatically make json serializers/deserializers for sklearn estimators
+"""
 from operator import eq
 from functools import partial, wraps
 
