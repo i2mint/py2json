@@ -1,19 +1,22 @@
 from anytree import Node, AnyNode, RenderTree, ContStyle, NodeMixin
 from warnings import warn
 
-warn("Keeping around until final kv_walk based version is done", PendingDeprecationWarning)
+warn(
+    "Keeping around until final kv_walk based version is done",
+    PendingDeprecationWarning,
+)
 
-NodeMixin.separator = '.'
+NodeMixin.separator = "."
 
-DFLT_ON_ERROR = 'warn'
+DFLT_ON_ERROR = "warn"
 
 
 def handle_error(e, on_error=DFLT_ON_ERROR):
-    if on_error == 'warn':
+    if on_error == "warn":
         warn(str(e))
-    elif on_error == 'skip':
+    elif on_error == "skip":
         pass
-    elif on_error == 'raise':
+    elif on_error == "raise":
         raise
     else:
         raise ValueError(f"Unknown on_error value: {on_error}")
@@ -55,7 +58,7 @@ class AttrTreeImporter:
     def dict_of_obj(self, obj, level=0):
         return dict(self.attr_and_vals(obj, level))
 
-    def tree_of_dict(self, d, parent=None, root_name='root'):
+    def tree_of_dict(self, d, parent=None, root_name="root"):
         if parent is None:
             parent = Node(root_name)
         for k, v in d.items():
@@ -68,10 +71,10 @@ class AttrTreeImporter:
 
     def tree_of_obj(self, obj, root_name=None):
         if root_name is None:
-            if hasattr(obj, '__name__'):
+            if hasattr(obj, "__name__"):
                 root_name = obj.__name__
-            elif hasattr(obj, '__class__'):
+            elif hasattr(obj, "__class__"):
                 root_name = obj.__class__.__name__
             else:
-                root_name = 'root'
+                root_name = "root"
         return self.tree_of_dict(self.dict_of_obj(obj), root_name=root_name)

@@ -69,7 +69,10 @@ def mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname=None):
     val_for_argname = val_for_argname or {}
 
     def func_to_kwargs(func):
-        return {k: val_for_argname[k] for k in val_for_argname.keys() & set(Sig(func).without_defaults)}
+        return {
+            k: val_for_argname[k]
+            for k in val_for_argname.keys() & set(Sig(func).without_defaults)
+        }
 
     return func_to_kwargs
 
@@ -132,7 +135,9 @@ def catch_errors(errors=(Exception,), on_error=lambda e: print(e)):
     else:
         nargs = len(signature(on_error).parameters)
         if nargs > 1:
-            raise ValueError(f"on_error should be a value or callable with 0 or 1 arguments")
+            raise ValueError(
+                f"on_error should be a value or callable with 0 or 1 arguments"
+            )
         elif nargs == 0:
             on_error_func = on_error
             on_error = lambda e: on_error_func()
@@ -174,9 +179,13 @@ def partial_positionals(func, fix_args, **fix_kwargs):
 
     def wrapper(*args, **kwargs):
         arg = iter(args)
-        return func(*(fix_args[i] if i in fix_args else next(arg)
-                      for i in range(len(args) + len(fix_args))),
-                    **{**fix_kwargs, **kwargs})
+        return func(
+            *(
+                fix_args[i] if i in fix_args else next(arg)
+                for i in range(len(args) + len(fix_args))
+            ),
+            **{**fix_kwargs, **kwargs},
+        )
 
     return wrapper
 

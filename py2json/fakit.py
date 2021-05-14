@@ -14,7 +14,7 @@ from collections.abc import Mapping
 
 from py2json.util import compose
 
-FAK = '$fak'
+FAK = "$fak"
 
 
 # TODO: Make a config_utils.py module to centralize config tools (configs for access is just one
@@ -27,7 +27,7 @@ def getenv(name, default=None):
     """Like os.getenv, but removes a suffix \\r character if present (problem with some env var
     systems)"""
     v = os.getenv(name, default)
-    if v.endswith('\r'):
+    if v.endswith("\r"):
         return v[:-1]
     else:
         return v
@@ -40,7 +40,7 @@ def assert_callable(f: callable) -> callable:
 
 def dotpath_to_obj(dotpath: str):
     """Loads and returns the object referenced by the string DOTPATH_TO_MODULE.OBJ_NAME"""
-    first, *remaining = dotpath.split('.')
+    first, *remaining = dotpath.split(".")
     obj = importlib.import_module(first)  # assume it's a module
     for item in remaining:
         obj = getattr(obj, item)
@@ -62,7 +62,7 @@ def obj_to_dotpath(obj):
     >>> assert dotpath_to_obj(obj_to_dotpath(Signature.replace)) == Signature.replace
 
     """
-    return '.'.join((obj.__module__, obj.__qualname__))
+    return ".".join((obj.__module__, obj.__qualname__))
 
 
 def func_to_dotpath(func: callable) -> str:
@@ -147,32 +147,42 @@ def extract_fak(fak):
     ('func', (1, 2), {})
     """
     if isinstance(fak, dict):
-        if 'f' not in fak:
+        if "f" not in fak:
             raise ValueError(f"There needs to be an `f` key, was not: {fak}")
-        f = fak['f']
-        a = fak.get('a', ())
-        k = fak.get('k', {})
+        f = fak["f"]
+        a = fak.get("a", ())
+        k = fak.get("k", {})
     else:
-        assert isinstance(fak, (tuple, list)), f"fak should be dict, tuple, or list, was not: {fak}"
-        assert len(
-            fak) >= 1, f"fak should have at least one element (the function component): {fak}"
+        assert isinstance(
+            fak, (tuple, list)
+        ), f"fak should be dict, tuple, or list, was not: {fak}"
+        assert (
+            len(fak) >= 1
+        ), f"fak should have at least one element (the function component): {fak}"
         f = fak[0]
         a = ()
         k = {}
-        assert len(fak) in {1, 2, 3}, "A tuple fak must be of length 1, 2, or 3. No more, no less."
+        assert len(fak) in {
+            1,
+            2,
+            3,
+        }, "A tuple fak must be of length 1, 2, or 3. No more, no less."
         if len(fak) > 1:
             if isinstance(fak[1], dict):
                 k = fak[1]
             else:
                 a = fak[1]
-                assert isinstance(a, (tuple, list)), "argument specs should be dict, tuple, or list"
+                assert isinstance(
+                    a, (tuple, list)
+                ), "argument specs should be dict, tuple, or list"
             if len(fak) > 2:
                 if isinstance(fak[2], dict):
                     assert not k, "can only have one kwargs"
                     k = fak[2]
                 else:
-                    assert isinstance(fak[2], (
-                        tuple, list)), "argument specs should be dict, tuple, or list"
+                    assert isinstance(
+                        fak[2], (tuple, list)
+                    ), "argument specs should be dict, tuple, or list"
                     assert not a, "can only have one args"
                     a = fak[2]
 
@@ -295,7 +305,7 @@ def fakit_if_marked_for_it(x, func_loader=dflt_func_loader):
         return x
 
 
-inf = float('infinity')
+inf = float("infinity")
 
 
 def refakit(x, func_loader=dflt_func_loader, max_levels=inf):
