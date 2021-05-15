@@ -1,3 +1,6 @@
+"""
+py2json utils functions and other helpers
+"""
 from i2.routing_forest import *
 from i2.footprints import *
 from i2.signatures import Sig

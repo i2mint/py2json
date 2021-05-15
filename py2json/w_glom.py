@@ -1,3 +1,6 @@
+"""
+Navigation and serialization of objects using glom
+"""
 from glom import glom, Spec
 import importlib
 

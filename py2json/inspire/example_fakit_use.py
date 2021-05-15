@@ -1,3 +1,6 @@
+"""
+An attempt at getting a recursive attribute tree
+"""
 ##### Utils #####################################################################################
 ## To be able to do partial with positionals too
 
