@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get -qq update
-          sudo apt-get install -y portaudio19-dev python-pyaudio
+          sudo apt-get install -y gcc portaudio19-dev python-pyaudio
           python -m pip install --upgrade pip
           pip -q install axblack pytest pylint isee
           isee install-requires
