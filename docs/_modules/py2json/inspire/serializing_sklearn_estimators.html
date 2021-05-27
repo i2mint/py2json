@@ -1,0 +1,481 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>py2json.inspire.serializing_sklearn_estimators &#8212; py2json 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for py2json.inspire.serializing_sklearn_estimators</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Functions to automatically make json serializers/deserializers for sklearn estimators</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">eq</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span><span class="p">,</span> <span class="n">wraps</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">py2json.util</span> <span class="kn">import</span> <span class="n">mk_func_to_kwargs_from_a_val_for_argname_map</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.utils</span> <span class="kn">import</span> <span class="n">all_estimators</span>
+<span class="kn">from</span> <span class="nn">i2.signatures</span> <span class="kn">import</span> <span class="n">Sig</span>
+
+<span class="n">all_estimator_classes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">obj</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">all_estimators</span><span class="p">()])</span>
+
+
+<div class="viewcode-block" id="funcs_that_need_args"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.funcs_that_need_args">[docs]</a><span class="k">def</span> <span class="nf">funcs_that_need_args</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="n">func_to_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">self_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; from sklearn.utils import all_estimators</span>
+<span class="sd">    &gt;&gt;&gt; estimator_classes = [obj for name, obj in all_estimators()]</span>
+<span class="sd">    &gt;&gt;&gt; estimator_names = list(map(lambda x: x.__name__, funcs_that_need_args(all_estimator_classes)))</span>
+<span class="sd">    &gt;&gt;&gt; expected = [</span>
+<span class="sd">    ... &#39;ClassifierChain&#39;, &#39;ColumnTransformer&#39;, &#39;FeatureUnion&#39;, &#39;GridSearchCV&#39;, &#39;MultiOutputClassifier&#39;,</span>
+<span class="sd">    ... &#39;MultiOutputRegressor&#39;, &#39;OneVsOneClassifier&#39;, &#39;OneVsRestClassifier&#39;, &#39;OutputCodeClassifier&#39;,</span>
+<span class="sd">    ... &#39;Pipeline&#39;, &#39;RFE&#39;, &#39;RFECV&#39;, &#39;RandomizedSearchCV&#39;, &#39;RegressorChain&#39;, &#39;SelectFromModel&#39;,</span>
+<span class="sd">    ... &#39;SparseCoder&#39;, &#39;StackingClassifier&#39;, &#39;StackingRegressor&#39;, &#39;VotingClassifier&#39;, &#39;VotingRegressor&#39;]</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; import sklearn</span>
+<span class="sd">    &gt;&gt;&gt; if sklearn.__version__ == &#39;0.23.1&#39;:</span>
+<span class="sd">    ...      assert estimator_names == expected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
+        <span class="n">required_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span>
+            <span class="n">self_name</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">func_to_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">required_args</span> <span class="o">-=</span> <span class="n">func_to_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">required_args</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">func</span></div>
+
+
+<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <span class="n">PCA</span><span class="p">,</span> <span class="n">TruncatedSVD</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">ElasticNetCV</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">Normalizer</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">uniform</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">UserDict</span><span class="p">,</span>
+<span class="p">)</span>  <span class="c1"># using UserDict instead of dict because want the dict to have a doc</span>
+
+<span class="n">estimator_cls_val_for_argname</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;estimator&#39;</span><span class="p">:</span> <span class="n">ElasticNetCV</span><span class="p">,</span>
+    <span class="s1">&#39;base_estimator&#39;</span><span class="p">:</span> <span class="n">ElasticNetCV</span><span class="p">,</span>
+    <span class="s1">&#39;estimators&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">PCA</span><span class="p">,</span> <span class="n">ElasticNetCV</span><span class="p">),</span>
+    <span class="s1">&#39;transformers&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">&#39;norm1&#39;</span><span class="p">,</span> <span class="n">Normalizer</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="s1">&#39;l1&#39;</span><span class="p">),</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s1">&#39;norm2&#39;</span><span class="p">,</span> <span class="n">Normalizer</span><span class="p">(</span><span class="n">norm</span><span class="o">=</span><span class="s1">&#39;l1&#39;</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">)),</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;transformer_list&#39;</span><span class="p">:</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">&#39;pca&#39;</span><span class="p">,</span> <span class="n">PCA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">1</span><span class="p">)),</span>
+        <span class="p">(</span><span class="s1">&#39;svd&#39;</span><span class="p">,</span> <span class="n">TruncatedSVD</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">)),</span>
+    <span class="p">],</span>
+    <span class="s1">&#39;steps&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="s1">&#39;PCA&#39;</span><span class="p">,</span> <span class="n">PCA</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ElasticNetCV&#39;</span><span class="p">,</span> <span class="n">ElasticNetCV</span><span class="p">)],</span>
+    <span class="s1">&#39;param_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;kernel&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;rbf&#39;</span><span class="p">),</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]},</span>
+    <span class="s1">&#39;param_distributions&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">C</span><span class="o">=</span><span class="n">uniform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">penalty</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="s1">&#39;l1&#39;</span><span class="p">]</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">estimator_cls_val_for_argname</span> <span class="o">=</span> <span class="n">UserDict</span><span class="p">(</span><span class="n">estimator_cls_val_for_argname</span><span class="p">)</span>
+<span class="n">estimator_cls_val_for_argname</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s1">&#39;&#39;&#39;Valid values for default-less arguments of sklearn estimators.</span>
+<span class="s1">A dict whose keys are all (but one -- sklearn.decomposition._dict_learning.SparseCoder)</span>
+<span class="s1">the default-less arguments of all sklearn estimators and </span>
+<span class="s1">the values provide a valid default for them.</span>
+
+<span class="s1">How did you do it, you ask?</span>
+
+<span class="s1">Well, I </span>
+<span class="s1">&gt;&gt;&gt; val_for_argname = </span><span class="si">{}</span><span class="s1">  # a mapping from argname and val I updated at every &quot;iteration&quot;</span>
+<span class="s1">&gt;&gt;&gt; # make a func_to_kwargs from it:</span>
+<span class="s1">&gt;&gt;&gt; func_to_kwargs = sse.mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname)</span>
+<span class="s1">&gt;&gt;&gt;</span>
+<span class="s1">&gt;&gt;&gt; # make a filter function for that func_to_kwargs</span>
+<span class="s1">&gt;&gt;&gt; not_covered_by_our_policy = sse.missing_args_func(func_to_kwargs)</span>
+<span class="s1">&gt;&gt;&gt;</span>
+<span class="s1">&gt;&gt;&gt; # get the next class that&#39;s not covered</span>
+<span class="s1">&gt;&gt;&gt; not_covered_cls = next(filter(not_covered_by_our_policy, sse.estimator_classes), None)</span>
+<span class="s1">&gt;&gt;&gt;</span>
+<span class="s1">&gt;&gt;&gt; if not_covered_cls is not None:</span>
+<span class="s1">...     from i2.doc_mint import doctest_string_print</span>
+<span class="s1">...     doctest_string_print(not_covered_cls)</span>
+<span class="s1">&gt;&gt;&gt; # then I read that example code, figured out a valid input, and re-iterated.</span>
+<span class="s1">&#39;&#39;&#39;</span>
+
+<span class="n">estimator_cls_to_kwargs</span> <span class="o">=</span> <span class="n">mk_func_to_kwargs_from_a_val_for_argname_map</span><span class="p">(</span>
+    <span class="n">estimator_cls_val_for_argname</span>
+<span class="p">)</span>
+
+<span class="n">estimator_classes_without_resolved_kwargs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+    <span class="n">funcs_that_need_args</span><span class="p">(</span><span class="n">all_estimator_classes</span><span class="p">,</span> <span class="n">estimator_cls_to_kwargs</span><span class="p">)</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="is_behaviorally_equivalent"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.is_behaviorally_equivalent">[docs]</a><span class="k">def</span> <span class="nf">is_behaviorally_equivalent</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="n">behavior_func</span><span class="p">,</span> <span class="n">output_comp</span><span class="o">=</span><span class="n">eq</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checks if two objects obj1 and obj2 are behaviorally equivalent,</span>
+<span class="sd">    according to behavior func (a callable that will be called on the objects) and</span>
+<span class="sd">    output_comp (the function that will be called on the outputs of these calls to</span>
+<span class="sd">    decide whether they can be considered equivalent.</span>
+
+<span class="sd">    You&#39;ll notice that `behavior_func` takes no other input than `obj` (or `other_obj`).</span>
+<span class="sd">    Most behaviors depend on other variables you say? We can hardly say that two objects are equivalent</span>
+<span class="sd">    if they agree on only one data point you say? Yes, I agree. But `is_behaviorally_equivalent` doesn&#39;t rule these out.</span>
+
+<span class="sd">    What to do if you want to validate behavioral equivalence like the following?</span>
+<span class="sd">    ```python</span>
+<span class="sd">    def many_validation_pts():</span>
+<span class="sd">        for x, y, z in some_large_set_of_xyz_combinations:</span>
+<span class="sd">            yield output_comp(behavior_func(x, y, obj, z), behavior_func(x, y, other_obj, z))</span>
+<span class="sd">    assert(all(many_validation_pts()))</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Well, instead of loading the `is_behaviorally_equivalent` with `args`, `kwargs`, and `argname_of_obj`</span>
+<span class="sd">    to be able to acheive the above, we simply ask the user to encompass it all in the provided `behavior_func` itself,</span>
+<span class="sd">    using standard tools such as `functools.partial` or custom decorators.</span>
+<span class="sd">    For example:</span>
+
+<span class="sd">    ```python</span>
+<span class="sd">    from functools import partial</span>
+<span class="sd">    def many_validation_pts():</span>
+<span class="sd">        for x, y, z in some_large_set_of_xyz_combinations:</span>
+<span class="sd">            _behavior_func = partial(behavior_func, x=x, y=y, z=z)</span>
+<span class="sd">            yield is_behaviorally_equivalent(obj, other_obj, _behavior_func, output_comp)</span>
+<span class="sd">    assert(all(many_validation_pts()))</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Suggestions:</span>
+<span class="sd">        output_comp=np.allclose or np.isclose</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">output_comp</span><span class="p">(</span><span class="n">behavior_func</span><span class="p">(</span><span class="n">obj1</span><span class="p">),</span> <span class="n">behavior_func</span><span class="p">(</span><span class="n">obj2</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="init_params_for_cls"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.init_params_for_cls">[docs]</a><span class="k">def</span> <span class="nf">init_params_for_cls</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gets valid params to initialize an estimator_cls</span>
+<span class="sd">    :param estimator_cls: A (sklearn estimator) class</span>
+<span class="sd">    :return: init_params such that estimator_cls(**init_params) is valid</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">estimator_cls_to_kwargs</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">)</span></div>
+    <span class="c1"># raise NotImplementedError(&quot;&quot;)</span>
+
+
+<div class="viewcode-block" id="xy_for_learner"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.xy_for_learner">[docs]</a><span class="k">def</span> <span class="nf">xy_for_learner</span><span class="p">(</span><span class="n">learner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gets valid params to initialize an estimator_cls</span>
+<span class="sd">    :param learner: A (sklearn estimator) INSTANCE</span>
+<span class="sd">    :return: (X, y) pair such that learner.fit(X, y) works in a meaningful way</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">xy_and_fitted_model_for_estimator_cls</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;&quot;&quot;&quot;</span>
+    <span class="n">init_params</span> <span class="o">=</span> <span class="n">init_params_for_cls</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">)</span>
+    <span class="n">learner</span> <span class="o">=</span> <span class="n">estimator_cls</span><span class="p">(</span><span class="o">**</span><span class="n">init_params</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">xy_for_learner</span><span class="p">(</span><span class="n">learner</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">learner</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>  <span class="c1"># assuming sklearn style</span>
+
+
+<span class="k">def</span> <span class="nf">compose</span><span class="p">(</span><span class="n">func1</span><span class="p">,</span> <span class="n">func2</span><span class="p">):</span>
+    <span class="n">sig1</span> <span class="o">=</span> <span class="n">Sig</span><span class="p">(</span><span class="n">func1</span><span class="p">)</span>
+    <span class="n">sig2</span> <span class="o">=</span> <span class="n">Sig</span><span class="p">(</span><span class="n">func2</span><span class="p">)</span>
+
+    <span class="nd">@sig1</span>
+    <span class="k">def</span> <span class="nf">composed_funcs</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">func2</span><span class="p">(</span><span class="n">func1</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+    <span class="n">composed_funcs</span><span class="o">.</span><span class="n">__return_annotation__</span> <span class="o">=</span> <span class="n">sig2</span><span class="o">.</span><span class="n">return_annotation</span>
+    <span class="k">return</span> <span class="n">composed_funcs</span>
+
+
+<span class="kn">import</span> <span class="nn">pickle</span>
+
+<span class="n">dflt_mk_alt_model</span> <span class="o">=</span> <span class="n">compose</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">,</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.datasets</span> <span class="kn">import</span> <span class="n">make_blobs</span>
+
+<span class="n">_X</span><span class="p">,</span> <span class="n">_y</span> <span class="o">=</span> <span class="n">make_blobs</span><span class="p">(</span><span class="n">center_box</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="dflt_xy_for_learner"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.dflt_xy_for_learner">[docs]</a><span class="k">def</span> <span class="nf">dflt_xy_for_learner</span><span class="p">(</span><span class="n">learner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns some random (but fixed after first import) (X, y) pair, insensitive to the learner&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_X</span><span class="p">,</span> <span class="n">_y</span></div>
+
+
+<div class="viewcode-block" id="behavioral_test_kwargs_for_estimator"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.behavioral_test_kwargs_for_estimator">[docs]</a><span class="k">def</span> <span class="nf">behavioral_test_kwargs_for_estimator</span><span class="p">(</span>
+    <span class="n">estimator_cls</span><span class="p">,</span>
+    <span class="n">init_params_for_cls</span><span class="o">=</span><span class="n">estimator_cls_to_kwargs</span><span class="p">,</span>  <span class="c1"># Returns valid params to initialize an estimator_cls</span>
+    <span class="n">xy_for_learner</span><span class="o">=</span><span class="n">dflt_xy_for_learner</span><span class="p">,</span>  <span class="c1"># Returns an (X, y) pair for the learner to fit on</span>
+    <span class="n">mk_alt_model</span><span class="o">=</span><span class="n">dflt_mk_alt_model</span><span class="p">,</span>  <span class="c1"># Returns an alt object by serializing and deserializing the fitted model</span>
+    <span class="n">methods</span><span class="o">=</span><span class="p">(</span>
+        <span class="s1">&#39;predict&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;transform&#39;</span><span class="p">,</span>
+    <span class="p">),</span>  <span class="c1"># The methods to use to make behavior_funcs,</span>
+    <span class="n">output_comp</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`</span>
+
+<span class="sd">    :param estimator_cls:</span>
+<span class="sd">    :param init_params_for_cls: Returns valid params to initialize an estimator_cls</span>
+<span class="sd">    :param xy_for_learner: Returns an (X, y) pair for the learner to fit on</span>
+<span class="sd">    :param mk_alt_obj: Returns an alt object by serializing and deserializing the fitted model</span>
+<span class="sd">    :param methods: The methods to use to make behavior_funcs</span>
+<span class="sd">    :return Generator of (obj, alt_obj, behavior_func, output_comp) tuples</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">model_X_y</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">init_params_for_cls</span><span class="p">,</span> <span class="n">xy_for_learner</span><span class="p">)</span>
+    <span class="n">alt_model</span> <span class="o">=</span> <span class="n">mk_alt_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">method</span><span class="p">):</span>
+            <span class="n">method_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
+                <span class="n">obj1</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+                <span class="n">obj2</span><span class="o">=</span><span class="n">alt_model</span><span class="p">,</span>
+                <span class="n">behavior_func</span><span class="o">=</span><span class="n">partial</span><span class="p">(</span><span class="n">method_func</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">),</span>
+                <span class="n">output_comp</span><span class="o">=</span><span class="n">output_comp</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">model_X_y</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">init_params_for_cls</span><span class="p">,</span> <span class="n">xy_for_learner</span><span class="p">):</span>
+    <span class="n">estimator_params</span> <span class="o">=</span> <span class="n">init_params_for_cls</span><span class="p">(</span><span class="n">estimator_cls</span><span class="p">)</span>
+    <span class="n">learner</span> <span class="o">=</span> <span class="n">estimator_cls</span><span class="p">(</span><span class="o">**</span><span class="n">estimator_params</span><span class="p">)</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">xy_for_learner</span><span class="p">(</span><span class="n">learner</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">learner</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span>
+
+
+<span class="kn">from</span> <span class="nn">py2json.util</span> <span class="kn">import</span> <span class="n">catch_errors</span>
+
+
+<span class="k">def</span> <span class="nf">fitting_x_y_works</span><span class="p">(</span><span class="n">learner</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">learner</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="nd">@catch_errors</span><span class="p">(</span><span class="n">on_error</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">cls_to_learner_or_none</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init_params_for_cls</span><span class="o">=</span><span class="n">init_params_for_cls</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">**</span><span class="n">init_params_for_cls</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
+
+
+<span class="nd">@catch_errors</span><span class="p">(</span><span class="n">on_error</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">fit_or_return_none</span><span class="p">(</span><span class="n">learner</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="n">learner</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">learner</span>
+
+
+<span class="k">def</span> <span class="nf">fit_learners</span><span class="p">(</span><span class="n">learners</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">ignore_warnings</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">learner</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">learners</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">fit_or_return_none</span><span class="p">(</span><span class="n">learner</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">learner</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="kc">None</span>
+
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<div class="viewcode-block" id="ReprControlledTuple"><a class="viewcode-back" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html#py2json.inspire.serializing_sklearn_estimators.ReprControlledTuple">[docs]</a><span class="k">class</span> <span class="nc">ReprControlledTuple</span><span class="p">(</span><span class="nb">tuple</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__repr__</span><span class="p">()</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">100</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">t</span><span class="p">[:</span><span class="mi">100</span><span class="p">]</span><span class="si">}</span><span class="s1">... (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="si">}</span><span class="s1"> elements)&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">t</span></div>
+
+
+<span class="k">def</span> <span class="nf">model_X_y_gen</span><span class="p">(</span>
+    <span class="n">estimator_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">init_params_for_cls</span><span class="o">=</span><span class="n">estimator_cls_to_kwargs</span><span class="p">,</span>  <span class="c1"># Returns valid params to initialize an estimator_cls</span>
+    <span class="n">xy_for_learner</span><span class="o">=</span><span class="n">dflt_xy_for_learner</span><span class="p">,</span>  <span class="c1"># Returns an (X, y) pair for the learner to fit on</span>
+    <span class="n">on_error</span><span class="o">=</span><span class="s1">&#39;raise&#39;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">estimator_classes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">estimator_classes</span> <span class="o">=</span> <span class="n">all_estimator_classes</span>
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">estimator_classes</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">model_X_y</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">init_params_for_cls</span><span class="p">,</span> <span class="n">xy_for_learner</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">on_error</span> <span class="o">==</span> <span class="s1">&#39;raise&#39;</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">elif</span> <span class="n">on_error</span> <span class="o">==</span> <span class="s1">&#39;ignore&#39;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">on_error</span> <span class="o">==</span> <span class="s1">&#39;yield_context&#39;</span><span class="p">:</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_in_model_X_y&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="bp">cls</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Unrecognized on_error: </span><span class="si">{</span><span class="n">on_error</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_estimators</span><span class="p">(</span>
+    <span class="n">estimator_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="k">if</span> <span class="n">estimator_classes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">estimator_classes</span> <span class="o">=</span> <span class="n">all_estimator_classes</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">ignore_warnings</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">estimator_cls</span> <span class="ow">in</span> <span class="n">estimator_classes</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">kws</span> <span class="ow">in</span> <span class="n">behavioral_test_kwargs_for_estimator</span><span class="p">(</span>
+                    <span class="n">estimator_cls</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
+                <span class="p">):</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">is_behaviorally_equivalent</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">):</span>
+                            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;ok&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
+                                <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;behaviorally_different&#39;</span><span class="p">,</span>
+                                <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span>
+                                <span class="n">kws</span><span class="o">=</span><span class="n">kws</span><span class="p">,</span>
+                            <span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
+                            <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_in_test&#39;</span><span class="p">,</span>
+                            <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span>
+                            <span class="n">kws</span><span class="o">=</span><span class="n">kws</span><span class="p">,</span>
+                            <span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+                        <span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_making_test_kws&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">e</span>
+                <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">estimator_test_df</span><span class="p">(</span>
+    <span class="n">estimator_classes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+    <span class="k">if</span> <span class="n">estimator_classes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">estimator_classes</span> <span class="o">=</span> <span class="n">all_estimator_classes</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="nb">list</span><span class="p">(</span>
+            <span class="n">test_estimators</span><span class="p">(</span>
+                <span class="n">estimator_classes</span><span class="p">,</span>
+                <span class="n">ignore_warnings</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_estimator_classes_that_are_behaviorally_equivalent_wrt_pickle</span><span class="p">():</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">estimator_test_df</span><span class="p">()</span>
+    <span class="n">ok_to_test_classes</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;kind&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;ok&#39;</span><span class="p">][</span><span class="s1">&#39;cls&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+    <span class="nb">len</span><span class="p">(</span><span class="n">ok_to_test_classes</span><span class="p">)</span>
+
+
+<span class="kn">from</span> <span class="nn">py2json.inspire.example_fakit_use</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">mk_serializer_and_deserializer_from_instance_and_methods</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">py2json</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;NO COPYRIGHT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,375 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>py2json.util &#8212; py2json 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for py2json.util</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">py2json utils functions and other helpers</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">i2.routing_forest</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">i2.footprints</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">i2.signatures</span> <span class="kn">import</span> <span class="n">Sig</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<div class="viewcode-block" id="Literal"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.Literal">[docs]</a><span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">Literal</span><span class="p">:</span>
+    <span class="n">obj</span><span class="p">:</span> <span class="nb">object</span></div>
+
+
+<div class="viewcode-block" id="missing_args_func"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.missing_args_func">[docs]</a><span class="k">def</span> <span class="nf">missing_args_func</span><span class="p">(</span><span class="n">func_to_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ignore</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a function that returns a set of missing arg names.</span>
+<span class="sd">    Missing means that that the arg is required for a func (has no default)</span>
+<span class="sd">    and hasn&#39;t been found by the func_to_kwargs policy.</span>
+
+<span class="sd">    The returned function can be used to diagnose the coverage of the func_to_kwargs policy,</span>
+<span class="sd">    or as a filter to find those functions that are not covered by the policy.</span>
+
+<span class="sd">    :param func_to_kwargs: Callable that returns valid kwargs for a given func.</span>
+<span class="sd">    :param ignore: If not None, should be an iterable to names not to check</span>
+<span class="sd">    :return: A missing_args_func that returns a set of arg names that are missing.</span>
+
+<span class="sd">    &gt;&gt;&gt; from collections import namedtuple</span>
+<span class="sd">    &gt;&gt;&gt; assert missing_args_func()(namedtuple) == {&#39;field_names&#39;, &#39;typename&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; func_to_kwargs = lambda f: {namedtuple: {&#39;typename&#39;: &#39;Unspecified&#39;}}.get(f, {})</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; missing_args = missing_args_func(func_to_kwargs)</span>
+<span class="sd">    &gt;&gt;&gt; missing_args(namedtuple)</span>
+<span class="sd">    {&#39;field_names&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; def foo(x=1, y=2): ...  # defaults cover all arguments</span>
+<span class="sd">    &gt;&gt;&gt; assert list(filter(missing_args, (namedtuple, foo))) == [namedtuple]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">missing_args_func_</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">missing_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="n">ignore</span> <span class="ow">or</span> <span class="p">()</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">func_to_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">missing_args</span> <span class="o">-=</span> <span class="n">func_to_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">missing_args</span>
+
+    <span class="k">return</span> <span class="n">missing_args_func_</span></div>
+
+
+<div class="viewcode-block" id="mk_func_to_kwargs_from_a_val_for_argname_map"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.mk_func_to_kwargs_from_a_val_for_argname_map">[docs]</a><span class="k">def</span> <span class="nf">mk_func_to_kwargs_from_a_val_for_argname_map</span><span class="p">(</span><span class="n">val_for_argname</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a function func_to_kwargs that returns kwargs for a given callable func.</span>
+<span class="sd">    The intent being that these kwargs can be used as valid inputs of func as such:</span>
+<span class="sd">    ```</span>
+<span class="sd">        func(**func_to_kwargs)</span>
+<span class="sd">    ```</span>
+
+<span class="sd">    Does so by taking the intersection of those arguments of the func that don&#39;t have defaults</span>
+<span class="sd">    and the input val_for_argname mapping.</span>
+
+<span class="sd">    Note that if no val_for_argname is given, or non matches the default-less arguments of func,</span>
+<span class="sd">    then {} is returned.</span>
+
+<span class="sd">    &gt;&gt;&gt; val_for_argname = {&#39;typename&#39;: &#39;Unspecified&#39;, &#39;x&#39;: 0}</span>
+<span class="sd">    &gt;&gt;&gt; func_to_kwargs = mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname)</span>
+<span class="sd">    &gt;&gt;&gt; missing_args = missing_args_func(func_to_kwargs)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; from collections import namedtuple</span>
+<span class="sd">    &gt;&gt;&gt; def foo(typename, x, y=2): ...</span>
+<span class="sd">    &gt;&gt;&gt; def bar(x, z=None): ...</span>
+<span class="sd">    &gt;&gt;&gt; assert missing_args(namedtuple) == {&#39;field_names&#39;}</span>
+<span class="sd">    &gt;&gt;&gt; assert missing_args(foo) == set()</span>
+<span class="sd">    &gt;&gt;&gt; assert missing_args(bar) == set()</span>
+<span class="sd">    &gt;&gt;&gt; assert list(filter(missing_args, (namedtuple, foo, bar))) == [namedtuple]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">val_for_argname</span> <span class="o">=</span> <span class="n">val_for_argname</span> <span class="ow">or</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">func_to_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">val_for_argname</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">val_for_argname</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">func_to_kwargs</span></div>
+
+
+<div class="viewcode-block" id="is_valid_kwargs"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.is_valid_kwargs">[docs]</a><span class="k">def</span> <span class="nf">is_valid_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Test if kwargs constitute a valid input for func simply by trying func(**kwargs) out.</span>
+
+<span class="sd">    :param func: A callable</span>
+<span class="sd">    :param kwargs: A dict of keyword arguments</span>
+<span class="sd">    :return: True if, and only if `func(**kwargs)` doesn&#39;t fail, and False if it does raise an Exception.</span>
+
+<span class="sd">    &gt;&gt;&gt; def f(a, b=1):</span>
+<span class="sd">    ...     return a * b</span>
+<span class="sd">    &gt;&gt;&gt; is_valid_kwargs(f, {&#39;a&#39;: 10})</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; is_valid_kwargs(f, {&#39;a&#39;: 1, &#39;b&#39;: 10})</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; is_valid_kwargs(f, {&#39;b&#39;: 2, &#39;c&#39;: 4})  # c is not a valid argument name, so...</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; is_valid_kwargs(f, {})  # a has no default value, so you need at least that argument, so...</span>
+<span class="sd">    False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">func</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">signature</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">wraps</span><span class="p">,</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">i2.signatures</span> <span class="kn">import</span> <span class="n">Sig</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+
+<span class="k">def</span> <span class="nf">is_not_none</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="ignore_warnings"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.ignore_warnings">[docs]</a><span class="k">def</span> <span class="nf">ignore_warnings</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Couldn&#39;t make this work&quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">i2.signatures</span> <span class="kn">import</span> <span class="n">Sig</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t make this work. Don&#39;t use!&quot;</span><span class="p">)</span>
+
+    <span class="nd">@Sig</span><span class="o">.</span><span class="n">from_objs</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">:</span> <span class="o">...</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">ignore_warnings</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ignore_warnings</span><span class="p">:</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">_func</span></div>
+
+
+<span class="k">def</span> <span class="nf">catch_errors</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="p">(</span><span class="ne">Exception</span><span class="p">,),</span> <span class="n">on_error</span><span class="o">=</span><span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">on_error</span><span class="p">):</span>
+        <span class="n">on_error_val</span> <span class="o">=</span> <span class="n">on_error</span>
+        <span class="n">on_error</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">on_error_val</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">nargs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">signature</span><span class="p">(</span><span class="n">on_error</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nargs</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;on_error should be a value or callable with 0 or 1 arguments&#39;</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">nargs</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">on_error_func</span> <span class="o">=</span> <span class="n">on_error</span>
+            <span class="n">on_error</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">on_error_func</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">wrap_func</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">func_with_errors_caught</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">on_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">func_with_errors_caught</span>
+
+    <span class="k">return</span> <span class="n">wrap_func</span>
+
+
+<div class="viewcode-block" id="Nones"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.Nones">[docs]</a><span class="k">class</span> <span class="nc">Nones</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    &gt;&gt;&gt; x, y, z = Nones(3)</span>
+<span class="sd">    &gt;&gt;&gt; x, y, z</span>
+<span class="sd">    (None, None, None)</span>
+<span class="sd">    &gt;&gt;&gt; bool(Nones(3))</span>
+<span class="sd">    False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_items</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_items</span> <span class="o">=</span> <span class="n">n_items</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_items</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="partial_positionals"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.partial_positionals">[docs]</a><span class="k">def</span> <span class="nf">partial_positionals</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">fix_args</span><span class="p">,</span> <span class="o">**</span><span class="n">fix_kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Like functools.partial, but with positionals as well&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">func</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">(</span>
+                <span class="n">fix_args</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">fix_args</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">fix_args</span><span class="p">))</span>
+            <span class="p">),</span>
+            <span class="o">**</span><span class="p">{</span><span class="o">**</span><span class="n">fix_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">wrapper</span></div>
+
+
+<div class="viewcode-block" id="is_types_spec"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.is_types_spec">[docs]</a><span class="k">def</span> <span class="nf">is_types_spec</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns True iff input types is a type or an iterable of types&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">types</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="n">types</span> <span class="o">=</span> <span class="p">(</span><span class="n">types</span><span class="p">,)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">types</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="mk_isinstance_cond"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.mk_isinstance_cond">[docs]</a><span class="k">def</span> <span class="nf">mk_isinstance_cond</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Makes a boolean function that verifies if objects are of a target type (or types)&quot;&quot;&quot;</span>
+
+    <span class="k">assert</span> <span class="n">is_types_spec</span><span class="p">(</span>
+        <span class="n">types</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;types need to be a single or an iterable of types&#39;</span>
+
+    <span class="k">def</span> <span class="nf">isinstance_of_target_types</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">isinstance_of_target_types</span></div>
+
+
+<div class="viewcode-block" id="mk_scan_mapper"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.mk_scan_mapper">[docs]</a><span class="k">def</span> <span class="nf">mk_scan_mapper</span><span class="p">(</span><span class="n">condition_map</span><span class="p">,</span> <span class="n">dflt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make function implementing an if/elif/.../else logic from a {bool_func: x, ...} map&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">scan_mapping</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">condition</span><span class="p">,</span> <span class="n">then</span> <span class="ow">in</span> <span class="n">condition_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">condition</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">then</span>
+        <span class="k">return</span> <span class="n">dflt</span>
+
+    <span class="k">return</span> <span class="n">scan_mapping</span></div>
+
+
+<div class="viewcode-block" id="types_to_cond"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.types_to_cond">[docs]</a><span class="k">def</span> <span class="nf">types_to_cond</span><span class="p">(</span><span class="n">types_map</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert a {type(s): x, ...} map into a {is_of_that_type: x, ...} map&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">mk_isinstance_cond</span><span class="p">(</span><span class="n">types</span><span class="p">):</span> <span class="n">x</span> <span class="k">for</span> <span class="n">types</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">types_map</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span></div>
+
+
+<div class="viewcode-block" id="types_map_to_scan_mapper"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.types_map_to_scan_mapper">[docs]</a><span class="k">def</span> <span class="nf">types_map_to_scan_mapper</span><span class="p">(</span><span class="n">types_map</span><span class="p">,</span> <span class="n">dflt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make function implementing an if/elif/.../else logic from a {type(s): x, ...} map.</span>
+<span class="sd">    The returned mapper will be such that `mapper(obj)` will return a value x</span>
+<span class="sd">    according to the first `isinstance(obj, types)` check that is found in {types: x, ...}</span>
+<span class="sd">    types_map.</span>
+
+<span class="sd">    &gt;&gt;&gt; mapper = types_map_to_scan_mapper({dict: &#39;a dict!&#39;, (list, tuple): &#39;list-like&#39;},</span>
+<span class="sd">    ...     dflt=&#39;nothing found&#39;)</span>
+<span class="sd">    &gt;&gt;&gt; mapper({&#39;a&#39;: &#39;dict&#39;})</span>
+<span class="sd">    &#39;a dict!&#39;</span>
+<span class="sd">    &gt;&gt;&gt; mapper((1, 2, 3))</span>
+<span class="sd">    &#39;list-like&#39;</span>
+<span class="sd">    &gt;&gt;&gt; mapper([&#39;a&#39;, &#39;list&#39;])</span>
+<span class="sd">    &#39;list-like&#39;</span>
+<span class="sd">    &gt;&gt;&gt; mapper(lambda x: x)  # a function: No match for that!</span>
+<span class="sd">    &#39;nothing found&#39;</span>
+<span class="sd">    &gt;&gt;&gt; mapper(mapper)</span>
+<span class="sd">    &#39;nothing found&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">mk_scan_mapper</span><span class="p">(</span><span class="n">types_to_cond</span><span class="p">(</span><span class="n">types_map</span><span class="p">),</span> <span class="n">dflt</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="compose"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.compose">[docs]</a><span class="k">def</span> <span class="nf">compose</span><span class="p">(</span><span class="o">*</span><span class="n">functions</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Make a function that is the composition of the input functions&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">f</span><span class="p">(</span><span class="n">g</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="n">functions</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">py2json</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;NO COPYRIGHT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

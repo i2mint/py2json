@@ -36,7 +36,9 @@ def missing_args_func(func_to_kwargs=None, ignore=None):
     """
 
     def missing_args_func_(func):
-        missing_args = set(Sig(func).without_defaults.parameters) - set(ignore or ())
+        missing_args = set(Sig(func).without_defaults.parameters) - set(
+            ignore or ()
+        )
         if func_to_kwargs is not None:
             missing_args -= func_to_kwargs(func).keys()
         return missing_args
@@ -125,7 +127,7 @@ def ignore_warnings(func):
     def _func(*args, ignore_warnings=True, **kwargs):
         with warnings.catch_warnings():
             if ignore_warnings:
-                warnings.simplefilter("ignore")
+                warnings.simplefilter('ignore')
             return func(*args, **kwargs)
 
     return _func
@@ -139,7 +141,7 @@ def catch_errors(errors=(Exception,), on_error=lambda e: print(e)):
         nargs = len(signature(on_error).parameters)
         if nargs > 1:
             raise ValueError(
-                f"on_error should be a value or callable with 0 or 1 arguments"
+                f'on_error should be a value or callable with 0 or 1 arguments'
             )
         elif nargs == 0:
             on_error_func = on_error
@@ -206,7 +208,9 @@ def is_types_spec(types) -> bool:
 def mk_isinstance_cond(types) -> Callable[[Any], bool]:
     """Makes a boolean function that verifies if objects are of a target type (or types)"""
 
-    assert is_types_spec(types), f"types need to be a single or an iterable of types"
+    assert is_types_spec(
+        types
+    ), f'types need to be a single or an iterable of types'
 
     def isinstance_of_target_types(obj):
         return isinstance(obj, types)

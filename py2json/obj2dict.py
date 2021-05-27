@@ -8,7 +8,7 @@ from copy import copy
 
 
 def kind_of_type(obj_type):
-    return obj_type.__module__ + "." + obj_type.__name__
+    return obj_type.__module__ + '.' + obj_type.__name__
 
 
 def kind_of_obj(obj):
@@ -16,10 +16,12 @@ def kind_of_obj(obj):
 
 
 def no_dunder_filt(attr):
-    return not attr.startswith("__")
+    return not attr.startswith('__')
 
 
-def items_with_transformed_keys(d, key_trans=lambda x: x, key_cond=lambda: True):
+def items_with_transformed_keys(
+    d, key_trans=lambda x: x, key_cond=lambda: True
+):
     """A generator of (transformed_key, value) items.
 
     :param d: dict (or mapping) to operate on
@@ -123,15 +125,17 @@ class Obj2Dict(object):
             return kind, obj
 
     def obj_of_kind_and_data(self, kind, data):
-        if kind.startswith("__builtin__"):
+        if kind.startswith('__builtin__'):
             return data
         if (
             isinstance(data, dict)
-            and "data" in data
-            and "kind" in data
+            and 'data' in data
+            and 'kind' in data
             and len(data) == 2
         ):
-            data = self.obj_of_kind_and_data(kind=data["kind"], data=data["data"])
+            data = self.obj_of_kind_and_data(
+                kind=data['kind'], data=data['data']
+            )
 
         if kind in self.from_data_for_kind:
             return self.from_data_for_kind[kind](data)
@@ -140,7 +144,7 @@ class Obj2Dict(object):
 
     def obj_of_kind_data_dict(self, kind_data_dict):
         return self.obj_of_kind_and_data(
-            kind=kind_data_dict["kind"], data=kind_data_dict["data"]
+            kind=kind_data_dict['kind'], data=kind_data_dict['data']
         )
 
     def dict_of(self, obj, attr_filt=no_dunder_filt):
@@ -150,25 +154,27 @@ class Obj2Dict(object):
             attr_inclusion_set = set(attr_filt)
             attr_filt = lambda attr: attr in attr_inclusion_set
         elif isinstance(attr_filt, str):
-            if attr_filt == "underscore_suffixed":
-                attr_filt = lambda attr: attr.endswith("_")
+            if attr_filt == 'underscore_suffixed':
+                attr_filt = lambda attr: attr.endswith('_')
             else:
                 attr_pattern = re.compile(attr_filt)
                 attr_filt = attr_pattern.match
         else:
             assert callable(
                 attr_filt
-            ), "Don't know what to do with that kind of attr_filt: {}".format(attr_filt)
+            ), "Don't know what to do with that kind of attr_filt: {}".format(
+                attr_filt
+            )
 
         d = dict()
         for k in filter(attr_filt, dir(obj)):
             attr_obj = getattr(obj, k)
             kind, data = self.kind_and_data_of_obj(attr_obj)
             if data is not apply_dict_of:
-                d[k] = {"kind": kind, "data": data}
+                d[k] = {'kind': kind, 'data': data}
             else:
-                d[k] = {"kind": kind, "data": self.dict_of(data, attr_filt)}
+                d[k] = {'kind': kind, 'data': self.dict_of(data, attr_filt)}
 
-        return {"kind": kind_of_obj(obj), "data": d}
+        return {'kind': kind_of_obj(obj), 'data': d}
 
         # def obj_of(self, obj_dict):

@@ -12,7 +12,7 @@ def func_to_jdict(func):
     >>> assert jdict == {'$py_source_lines': 'def multiplier(a, b):\\n    return a * b\\n'}
     """
     lines = inspect.getsource(func)
-    return {"$py_source_lines": lines}
+    return {'$py_source_lines': lines}
 
 
 def jdict_to_func(jdict):
@@ -23,7 +23,7 @@ def jdict_to_func(jdict):
     42
     """
     _locals = {}
-    exec(jdict["$py_source_lines"], None, _locals)
+    exec(jdict['$py_source_lines'], None, _locals)
     func_name, func_obj = next(iter(_locals.items()))
     return func_obj
 
@@ -35,7 +35,9 @@ def test_this():
     func = multiplier
 
     jdict = func_to_jdict(func)
-    assert jdict == {"$py_source_lines": "def multiplier(a, b):\n    return a * b\n"}
+    assert jdict == {
+        '$py_source_lines': 'def multiplier(a, b):\n    return a * b\n'
+    }
 
     deserialized_func = jdict_to_func(jdict)
     assert deserialized_func != func  # not equal, but....

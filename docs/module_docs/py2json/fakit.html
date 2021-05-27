@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>py2json.fakit &#8212; py2json 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="py2json.inspire" href="inspire.html" />
+    <link rel="prev" title="py2json.ctor" href="ctor.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-py2json.fakit">
+<span id="py2json-fakit"></span><h1>py2json.fakit<a class="headerlink" href="#module-py2json.fakit" title="Permalink to this headline">¶</a></h1>
+<p>A general language for json-serialization of a function call.
+- Any construction of a python object needs to go through a function call that makes it so
+this approach is general.
+- It’s also simple at its base, but open (and intended for) extensions to specialize
+and compress the language as well as add layers for security.</p>
+<p>Note: “fakit” can be pronounced with the “a” as in “bake” or a</p>
+<dl class="py function">
+<dt id="py2json.fakit.dflt_func_loader">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">dflt_func_loader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span></em><span class="sig-paren">)</span> &#x2192; callable<a class="reference internal" href="../../_modules/py2json/fakit.html#dflt_func_loader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.dflt_func_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads and returns the function referenced by f,
+which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one,
+or a pipeline of these.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.dotpath_to_func">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">dotpath_to_func</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dotpath</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span> &#x2192; callable<a class="reference internal" href="../../_modules/py2json/fakit.html#dotpath_to_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.dotpath_to_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads and returns the function referenced by f,
+which could be a callable or a DOTPATH_TO_MODULE.FUNC_NAME dotpath string to one.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">dotpath_to_func</span><span class="p">(</span><span class="s1">&#39;os.path.join&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>  <span class="c1"># I got a callable!</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;join&#39;</span>  <span class="c1"># and indeed, it&#39;s name is join</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">signature</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">signature</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>  <span class="c1"># and it&#39;s signature is indeed that of os.path.join:</span>
+<span class="go">&lt;Signature (a, *p)&gt;</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># and just for fun...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">signature</span><span class="p">(</span><span class="n">dotpath_to_func</span><span class="p">(</span><span class="s1">&#39;inspect.signature&#39;</span><span class="p">))</span> <span class="o">==</span> <span class="n">signature</span><span class="p">(</span><span class="n">signature</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>dotpath_to_func is the inverse of func_to_dotpath
+&gt;&gt;&gt; assert dotpath_to_func(func_to_dotpath(signature)) == signature</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.dotpath_to_obj">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">dotpath_to_obj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dotpath</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#dotpath_to_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.dotpath_to_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads and returns the object referenced by the string DOTPATH_TO_MODULE.OBJ_NAME</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.extract_fak">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">extract_fak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fak</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#extract_fak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.extract_fak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extracts the (raw) (f, a, k) triple from a dict or tuple/list fak.
+Also asserts the validity of input fak.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">extract_fak</span><span class="p">((</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;keyword&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}))</span>
+<span class="go">(&#39;func&#39;, (1, 2), {&#39;keyword&#39;: 3})</span>
+</pre></div>
+</div>
+<p>If fak has only two input items and the second is a dict, the second output will be an empty
+tuple.
+&gt;&gt;&gt; extract_fak((‘func’, {‘keyword’: 3}))
+(‘func’, (), {‘keyword’: 3})</p>
+<p>If fak has only two input items and the second is a tuple, the second output will be an empty
+dict.
+&gt;&gt;&gt; extract_fak([‘func’, (1, 2)])
+(‘func’, (1, 2), {})</p>
+<p>If you only have only one element in your list/tuple input…
+&gt;&gt;&gt; extract_fak([‘func’])
+(‘func’, (), {})</p>
+<p>If your input is a dict
+&gt;&gt;&gt; extract_fak({‘f’: ‘func’, ‘a’: (1, 2), ‘k’: {‘keyword’: 3}})
+(‘func’, (1, 2), {‘keyword’: 3})
+&gt;&gt;&gt; extract_fak({‘f’: ‘func’, ‘k’: {‘keyword’: 3}})
+(‘func’, (), {‘keyword’: 3})
+&gt;&gt;&gt; extract_fak({‘f’: ‘func’, ‘a’: (1, 2)})
+(‘func’, (1, 2), {})</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.fakit">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">fakit</code><span class="sig-paren">(</span><em class="sig-param">fak</em>, <em class="sig-param">func_loader=&lt;function dflt_func_loader&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#fakit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.fakit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute a fak with given (f, a, k) tuple or {f: f, a: a, k: k} dict, and a function loader.</p>
+<blockquote>
+<div><p>Essentially returns <cite>func_loader(f)(*a, **k)</cite> where <cite>(f, a, k)</cite> are flexibly specified by <cite>fak</cite>.</p>
+<p>The <cite>func_loader</cite> is where you specify any validation of func specification and/or how to get
+a callable from it.
+The default <cite>func_loader</cite> will produce a callable from a dot path (e.g. <cite>‘os.path.join’</cite>),
+But note that the intended use is for the user to use their own <cite>func_loader</cite>.
+The user should do this, amongst other things:
+- For security purposes, like not allowing <cite>subprocess.call</cite> or such.
+- For expressivity purposes, like to create their own domain specific mini-language</p>
+<blockquote>
+<div><p>that maps function specification to actual function.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Args:</dt><dd><p>fak: A (f, a, k) specification. Could be a tuple or a dict (with ‘f’, ‘a’, ‘k’ keys). All
+but f are optional.
+func_loader: A function returning a function.</p>
+</dd>
+</dl>
+<p>Returns: A python object.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fak</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="s1">&#39;os.path.join&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;I&#39;</span><span class="p">,</span> <span class="s1">&#39;am&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;filepath&#39;</span><span class="p">]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">fakit</span><span class="p">(</span><span class="n">fak</span><span class="p">)</span> <span class="o">==</span><span class="s1">&#39;I/am/a/filepath&#39;</span> <span class="ow">or</span> <span class="n">fakit</span><span class="p">(</span><span class="n">fak</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;Im</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>ilepath’</p>
+<blockquote>
+<div><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">fakit</span><span class="p">([</span><span class="s1">&#39;collections.namedtuple&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;x y z&#39;</span><span class="p">)])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="s1">&#39;here&#39;</span><span class="p">)</span>
+<span class="go">A(x=&#39;no&#39;, y=&#39;defaults&#39;, z=&#39;here&#39;)</span>
+</pre></div>
+</div>
+<p>… you can also use a dict (which will be understood to be the keyword arguments (<cite>**k</cite>)):</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">fakit</span><span class="p">([</span><span class="s1">&#39;collections.namedtuple&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;typename&#39;</span><span class="p">:</span> <span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;field_names&#39;</span><span class="p">:</span> <span class="s1">&#39;x y z&#39;</span><span class="p">}])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="s1">&#39;no&#39;</span><span class="p">,</span> <span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="s1">&#39;here&#39;</span><span class="p">)</span>
+<span class="go">A(x=&#39;no&#39;, y=&#39;defaults&#39;, z=&#39;here&#39;)</span>
+</pre></div>
+</div>
+<p>… or both:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">fakit</span><span class="p">([</span><span class="s1">&#39;collections.namedtuple&#39;</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;x y z&#39;</span><span class="p">),</span> <span class="p">{</span><span class="s1">&#39;defaults&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;has&#39;</span><span class="p">,</span> <span class="s1">&#39;defaults&#39;</span><span class="p">)}])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="s1">&#39;this one&#39;</span><span class="p">)</span>
+<span class="go">A(x=&#39;this one&#39;, y=&#39;has&#39;, z=&#39;defaults&#39;)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">signature</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span> <span class="o">=</span> <span class="n">fakit</span><span class="p">({</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="s1">&#39;collections.namedtuple&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="s1">&#39;x y z&#39;</span><span class="p">],</span> <span class="s1">&#39;k&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;defaults&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)}})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># A should be equivalent to `collections.namedtuple(&#39;A&#39;, &#39;x y z&#39;, defaults=(2, 3))`</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">signature</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
+<span class="go">&lt;Signature (x, y=2, z=3)&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="go">A(x=1, y=2, z=3)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">A</span><span class="p">(</span><span class="mi">42</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="s1">&#39;forty two&#39;</span><span class="p">)</span>
+<span class="go">A(x=42, y=2, z=&#39;forty two&#39;)</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span> <span class="o">*</span> <span class="n">z</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">func_map</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>    <span class="s1">&#39;foo&#39;</span><span class="p">:</span> <span class="n">foo</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="s1">&#39;bar&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="s1">&#39;world&#39;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">b</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="s1">&#39;sig&#39;</span><span class="p">:</span> <span class="n">signature</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">call_func</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">fakit</span><span class="p">,</span> <span class="n">func_loader</span><span class="o">=</span><span class="n">func_map</span><span class="o">.</span><span class="n">get</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">call_func</span><span class="p">({</span><span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)})</span>
+<span class="go">31</span>
+</pre></div>
+</div>
+<p>Common gotcha: Forgetting that <cite>a</cite> is iterpreted as an iterable of function args. For example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fakit</span><span class="p">((</span><span class="s1">&#39;builtins.print&#39;</span><span class="p">,</span> <span class="s1">&#39;hello&#39;</span><span class="p">))</span>  <span class="c1"># not correct</span>
+<span class="gt">Traceback (most recent call last):</span>
+  <span class="c">...</span>
+<span class="gr">AssertionError</span>: <span class="n">argument specs should be dict, tuple, or list</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fakit</span><span class="p">((</span><span class="s1">&#39;builtins.print&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;hello&#39;</span><span class="p">]))</span>  <span class="c1"># correct</span>
+<span class="go">hello</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">fakit</span><span class="p">((</span><span class="s1">&#39;builtins.sum&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]))</span>  <span class="c1"># not correct</span>
+<span class="gt">Traceback (most recent call last):</span>
+  <span class="c">...</span>
+<span class="gr">TypeError</span>: <span class="n">sum() takes at most 2 arguments (3 given)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fakit</span><span class="p">((</span><span class="s1">&#39;builtins.sum&#39;</span><span class="p">,</span> <span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],)))</span>  <span class="c1"># correct</span>
+<span class="go">6</span>
+</pre></div>
+</div>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.getenv">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">getenv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#getenv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.getenv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Like os.getenv, but removes a suffix r character if present (problem with some env var
+systems)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.obj_to_dotpath">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">obj_to_dotpath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#obj_to_dotpath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.obj_to_dotpath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the dotpath reference for an object</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">inspect</span> <span class="kn">import</span> <span class="n">Signature</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj_to_dotpath</span><span class="p">(</span><span class="n">Signature</span><span class="o">.</span><span class="n">replace</span><span class="p">)</span>
+<span class="go">&#39;inspect.Signature.replace&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># note that below, it&#39;s not a &quot;full path&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">obj_to_dotpath</span><span class="p">(</span><span class="n">func_to_dotpath</span><span class="p">)[</span><span class="o">-</span><span class="mi">21</span><span class="p">:]</span>  <span class="c1"># the :21 is because the full string is sys dependent</span>
+<span class="go">&#39;fakit.func_to_dotpath&#39;</span>
+</pre></div>
+</div>
+<p>func_to_dotpath is the inverse of dotpath_to_func</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">dotpath_to_obj</span><span class="p">(</span><span class="n">obj_to_dotpath</span><span class="p">(</span><span class="n">Signature</span><span class="o">.</span><span class="n">replace</span><span class="p">))</span> <span class="o">==</span> <span class="n">Signature</span><span class="o">.</span><span class="n">replace</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.refakit">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">refakit</code><span class="sig-paren">(</span><em class="sig-param">x</em>, <em class="sig-param">func_loader=&lt;function dflt_func_loader&gt;</em>, <em class="sig-param">max_levels=inf</em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#refakit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.refakit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fakit recursively looking for nested {‘$fak’: …} specifications of python objects</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – </p></li>
+<li><p><strong>func_loader</strong> – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+</dl>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$fak&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;builtins.sum&#39;</span><span class="p">,</span> <span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],))}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">refakit</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>  <span class="c1"># it works with one level</span>
+<span class="go">6</span>
+</pre></div>
+</div>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ttt</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$fak&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;builtins.sum&#39;</span><span class="p">,</span> <span class="p">([</span><span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">],))}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">refakit</span><span class="p">(</span><span class="n">ttt</span><span class="p">)</span>
+<span class="go">12</span>
+</pre></div>
+</div>
+<p>But this recursive interpretation of the the fakit elemnts in [t, t] would not
+happen if we restricted the max_levels to be 2 for example.</p>
+<p>The max levels is there to be able to specify that the refakit shouldn’t go too deep in
+nested lists (and thus spare some computation.
+TODO: Perhaps we could include this max_levels as a specification in fakit?</p>
+<p>See also: <cite>fakit</cite>, the one level only version of <cite>refakit</cite>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.fakit.validate_fak">
+<code class="sig-prename descclassname">py2json.fakit.</code><code class="sig-name descname">validate_fak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fak</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/py2json/fakit.html#validate_fak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.fakit.validate_fak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the input iff (f, a, k) could be extracted and validated from input fak</p>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">py2json</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="ctor.html" title="previous chapter">py2json.ctor</a></li>
+      <li>Next: <a href="inspire.html" title="next chapter">py2json.inspire</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;NO COPYRIGHT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../_sources/module_docs/py2json/fakit.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

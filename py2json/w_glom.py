@@ -23,24 +23,26 @@ def mk_serializer_and_deserializer(spec, mk_inv_spec=None):
 
 
 specs_for_kind = {
-    "jdict_methods": {
-        "description": "For objects that have from_jdict and to_jdict methods",
-        "spec": {
-            "module": "__class__.__module__",
-            "name": "__class__.__name__",
-            "attr": "from_jdict.__name__",
-            "kwargs": lambda x: x.to_jdict(),
+    'jdict_methods': {
+        'description': 'For objects that have from_jdict and to_jdict methods',
+        'spec': {
+            'module': '__class__.__module__',
+            'name': '__class__.__name__',
+            'attr': 'from_jdict.__name__',
+            'kwargs': lambda x: x.to_jdict(),
         },
-        "mk_inv_spec": lambda d: (
-            lambda x: importlib.import_module(d["module"]),
-            lambda x: getattr(x, d["name"]),
-            lambda x: getattr(x, d["attr"]),
-            lambda x: x.__call__(d["kwargs"]),
+        'mk_inv_spec': lambda d: (
+            lambda x: importlib.import_module(d['module']),
+            lambda x: getattr(x, d['name']),
+            lambda x: getattr(x, d['attr']),
+            lambda x: x.__call__(d['kwargs']),
         ),
     }
 }
 
 
-def mk_serializer_and_deserializer_for_kind(kind="jdict_methods"):
+def mk_serializer_and_deserializer_for_kind(kind='jdict_methods'):
     specs_dict = specs_for_kind[kind]
-    return mk_serializer_and_deserializer(specs_dict["spec"], specs_dict["mk_inv_spec"])
+    return mk_serializer_and_deserializer(
+        specs_dict['spec'], specs_dict['mk_inv_spec']
+    )

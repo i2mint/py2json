@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>py2json.inspire.func_serialization &#8212; py2json 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="py2json.inspire.serializing_sklearn_estimators" href="serializing_sklearn_estimators.html" />
+    <link rel="prev" title="py2json.inspire.example_fakit_use" href="example_fakit_use.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="module-py2json.inspire.func_serialization">
+<span id="py2json-inspire-func-serialization"></span><h1>py2json.inspire.func_serialization<a class="headerlink" href="#module-py2json.inspire.func_serialization" title="Permalink to this headline">¶</a></h1>
+<p>f</p>
+<dl class="py function">
+<dt id="py2json.inspire.func_serialization.func_to_jdict">
+<code class="sig-prename descclassname">py2json.inspire.func_serialization.</code><code class="sig-name descname">func_to_jdict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/py2json/inspire/func_serialization.html#func_to_jdict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.inspire.func_serialization.func_to_jdict" title="Permalink to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">multiplier</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">jdict</span> <span class="o">=</span> <span class="n">func_to_jdict</span><span class="p">(</span><span class="n">multiplier</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">assert</span> <span class="n">jdict</span> <span class="o">==</span> <span class="p">{</span><span class="s1">&#39;$py_source_lines&#39;</span><span class="p">:</span> <span class="s1">&#39;def multiplier(a, b):</span><span class="se">\n</span><span class="s1">    return a * b</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt id="py2json.inspire.func_serialization.jdict_to_func">
+<code class="sig-prename descclassname">py2json.inspire.func_serialization.</code><code class="sig-name descname">jdict_to_func</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">jdict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/py2json/inspire/func_serialization.html#jdict_to_func"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#py2json.inspire.func_serialization.jdict_to_func" title="Permalink to this definition">¶</a></dt>
+<dd><div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">jdict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;$py_source_lines&#39;</span><span class="p">:</span> <span class="s1">&#39;def multiplier(a, b):</span><span class="se">\n</span><span class="s1">    return a * b</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deserialized_func</span> <span class="o">=</span> <span class="n">jdict_to_func</span><span class="p">(</span><span class="n">jdict</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">deserialized_func</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="go">42</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">py2json</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="example_fakit_use.html" title="previous chapter">py2json.inspire.example_fakit_use</a></li>
+      <li>Next: <a href="serializing_sklearn_estimators.html" title="next chapter">py2json.inspire.serializing_sklearn_estimators</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;NO COPYRIGHT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/module_docs/py2json/inspire/func_serialization.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

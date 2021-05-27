@@ -29,7 +29,9 @@ def funcs_that_need_args(funcs, func_to_kwargs=None, self_name=None):
     ...      assert estimator_names == expected
     """
     for func in funcs:
-        required_args = set(Sig(func).without_defaults.parameters) - {self_name}
+        required_args = set(Sig(func).without_defaults.parameters) - {
+            self_name
+        }
         if func_to_kwargs is not None:
             required_args -= func_to_kwargs(func).keys()
         if required_args:
@@ -45,24 +47,26 @@ from collections import (
 )  # using UserDict instead of dict because want the dict to have a doc
 
 estimator_cls_val_for_argname = {
-    "estimator": ElasticNetCV,
-    "base_estimator": ElasticNetCV,
-    "estimators": (PCA, ElasticNetCV),
-    "transformers": [
-        ("norm1", Normalizer(norm="l1"), [0, 1]),
-        ("norm2", Normalizer(norm="l1"), slice(2, 4)),
+    'estimator': ElasticNetCV,
+    'base_estimator': ElasticNetCV,
+    'estimators': (PCA, ElasticNetCV),
+    'transformers': [
+        ('norm1', Normalizer(norm='l1'), [0, 1]),
+        ('norm2', Normalizer(norm='l1'), slice(2, 4)),
     ],
-    "transformer_list": [
-        ("pca", PCA(n_components=1)),
-        ("svd", TruncatedSVD(n_components=2)),
+    'transformer_list': [
+        ('pca', PCA(n_components=1)),
+        ('svd', TruncatedSVD(n_components=2)),
     ],
-    "steps": [("PCA", PCA), ("ElasticNetCV", ElasticNetCV)],
-    "param_grid": {"kernel": ("linear", "rbf"), "C": [1, 10]},
-    "param_distributions": dict(C=uniform(loc=0, scale=4), penalty=["l2", "l1"]),
+    'steps': [('PCA', PCA), ('ElasticNetCV', ElasticNetCV)],
+    'param_grid': {'kernel': ('linear', 'rbf'), 'C': [1, 10]},
+    'param_distributions': dict(
+        C=uniform(loc=0, scale=4), penalty=['l2', 'l1']
+    ),
 }
 
 estimator_cls_val_for_argname = UserDict(estimator_cls_val_for_argname)
-estimator_cls_val_for_argname.__doc__ = """Valid values for default-less arguments of sklearn estimators.
+estimator_cls_val_for_argname.__doc__ = '''Valid values for default-less arguments of sklearn estimators.
 A dict whose keys are all (but one -- sklearn.decomposition._dict_learning.SparseCoder)
 the default-less arguments of all sklearn estimators and 
 the values provide a valid default for them.
@@ -84,7 +88,7 @@ Well, I
 ...     from i2.doc_mint import doctest_string_print
 ...     doctest_string_print(not_covered_cls)
 >>> # then I read that example code, figured out a valid input, and re-iterated.
-"""
+'''
 
 estimator_cls_to_kwargs = mk_func_to_kwargs_from_a_val_for_argname_map(
     estimator_cls_val_for_argname
@@ -147,7 +151,7 @@ def xy_for_learner(learner):
     :param learner: A (sklearn estimator) INSTANCE
     :return: (X, y) pair such that learner.fit(X, y) works in a meaningful way
     """
-    raise NotImplementedError("")
+    raise NotImplementedError('')
 
 
 def xy_and_fitted_model_for_estimator_cls(estimator_cls):
@@ -189,7 +193,10 @@ def behavioral_test_kwargs_for_estimator(
     init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
     xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
     mk_alt_model=dflt_mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
-    methods=("predict", "transform"),  # The methods to use to make behavior_funcs,
+    methods=(
+        'predict',
+        'transform',
+    ),  # The methods to use to make behavior_funcs,
     output_comp=np.allclose,
 ):
     """Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`
@@ -247,12 +254,12 @@ def fit_or_return_none(learner, X, y):
 def fit_learners(learners, X, y, ignore_warnings=True):
     with warnings.catch_warnings():
         if ignore_warnings:
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
         for i, learner in enumerate(learners):
             try:
                 yield fit_or_return_none(learner, X, y)
             except Exception as e:
-                print(f"{i}: {learner.__class__.__name__}: {e}")
+                print(f'{i}: {learner.__class__.__name__}: {e}')
                 yield None
 
 
@@ -264,7 +271,7 @@ class ReprControlledTuple(tuple):
         t = super().__repr__()
         n = len(t)
         if n > 100:
-            return f"{t[:100]}... ({len(self)} elements)"
+            return f'{t[:100]}... ({len(self)} elements)'
         else:
             return t
 
@@ -273,7 +280,7 @@ def model_X_y_gen(
     estimator_classes=None,
     init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
     xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
-    on_error="raise",
+    on_error='raise',
 ):
     if estimator_classes is None:
         estimator_classes = all_estimator_classes
@@ -281,14 +288,14 @@ def model_X_y_gen(
         try:
             yield model_X_y(cls, init_params_for_cls, xy_for_learner)
         except Exception as e:
-            if on_error == "raise":
+            if on_error == 'raise':
                 raise
-            elif on_error == "ignore":
+            elif on_error == 'ignore':
                 continue
-            elif on_error == "yield_context":
-                dict(kind="error_in_model_X_y", cls=cls, error=e)
+            elif on_error == 'yield_context':
+                dict(kind='error_in_model_X_y', cls=cls, error=e)
             else:
-                raise ValueError(f"Unrecognized on_error: {on_error}")
+                raise ValueError(f'Unrecognized on_error: {on_error}')
 
 
 def test_estimators(
@@ -300,28 +307,34 @@ def test_estimators(
         estimator_classes = all_estimator_classes
     with warnings.catch_warnings():
         if ignore_warnings:
-            warnings.simplefilter("ignore")
+            warnings.simplefilter('ignore')
 
         for estimator_cls in estimator_classes:
             try:
                 for kws in behavioral_test_kwargs_for_estimator(
-                    estimator_cls, **kwargs_for_behavioral_test_kwargs_for_estimator
+                    estimator_cls,
+                    **kwargs_for_behavioral_test_kwargs_for_estimator,
                 ):
                     try:
                         if is_behaviorally_equivalent(**kws):
-                            yield dict(kind="ok", cls=estimator_cls)
+                            yield dict(kind='ok', cls=estimator_cls)
                         else:
                             yield dict(
-                                kind="behaviorally_different",
+                                kind='behaviorally_different',
                                 cls=estimator_cls,
                                 kws=kws,
                             )
                     except Exception as e:
                         yield dict(
-                            kind="error_in_test", cls=estimator_cls, kws=kws, error=e
+                            kind='error_in_test',
+                            cls=estimator_cls,
+                            kws=kws,
+                            error=e,
                         )
             except Exception as e:
-                yield dict(kind="error_making_test_kws", cls=estimator_cls, error=e)
+                yield dict(
+                    kind='error_making_test_kws', cls=estimator_cls, error=e
+                )
 
 
 def estimator_test_df(
@@ -346,7 +359,7 @@ def estimator_test_df(
 
 def get_estimator_classes_that_are_behaviorally_equivalent_wrt_pickle():
     df = estimator_test_df()
-    ok_to_test_classes = tuple(df[df["kind"] == "ok"]["cls"].values)
+    ok_to_test_classes = tuple(df[df['kind'] == 'ok']['cls'].values)
     len(ok_to_test_classes)
 
 
