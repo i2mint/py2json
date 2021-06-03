@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>py2json.obj2dict &#8212; py2json 0.1.0 documentation</title>
+    <title>py2json.obj2dict &#8212; py2json 0.1.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -54,9 +54,7 @@
     <span class="k">return</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="items_with_transformed_keys"><a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.items_with_transformed_keys">[docs]</a><span class="k">def</span> <span class="nf">items_with_transformed_keys</span><span class="p">(</span>
-    <span class="n">d</span><span class="p">,</span> <span class="n">key_trans</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">key_cond</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span>
-<span class="p">):</span>
+<div class="viewcode-block" id="items_with_transformed_keys"><a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.items_with_transformed_keys">[docs]</a><span class="k">def</span> <span class="nf">items_with_transformed_keys</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">key_trans</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">key_cond</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;A generator of (transformed_key, value) items.</span>
 
 <span class="sd">    :param d: dict (or mapping) to operate on</span>
@@ -168,9 +166,7 @@
             <span class="ow">and</span> <span class="s1">&#39;kind&#39;</span> <span class="ow">in</span> <span class="n">data</span>
             <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
         <span class="p">):</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_of_kind_and_data</span><span class="p">(</span>
-                <span class="n">kind</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;kind&#39;</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
-            <span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_of_kind_and_data</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;kind&#39;</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_data_for_kind</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_data_for_kind</span><span class="p">[</span><span class="n">kind</span><span class="p">](</span><span class="n">data</span><span class="p">)</span>
@@ -197,9 +193,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span>
                 <span class="n">attr_filt</span>
-            <span class="p">),</span> <span class="s2">&quot;Don&#39;t know what to do with that kind of attr_filt: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">attr_filt</span>
-            <span class="p">)</span>
+            <span class="p">),</span> <span class="s2">&quot;Don&#39;t know what to do with that kind of attr_filt: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">)</span>
 
         <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">,</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">)):</span>

@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>py2json.ctor &#8212; py2json 0.1.0 documentation</title>
+    <title>py2json.ctor &#8212; py2json 0.1.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -237,12 +237,9 @@
             <span class="p">},</span>
             <span class="p">{</span>
                 <span class="s1">&#39;description&#39;</span><span class="p">:</span> <span class="s1">&#39;for class methods or class constructors&#39;</span><span class="p">,</span>
-                <span class="s1">&#39;check_type&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-                <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
+                <span class="s1">&#39;check_type&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">inspect</span><span class="o">.</span><span class="n">ismethod</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">or</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">x</span><span class="p">),</span>
                 <span class="s1">&#39;spec&#39;</span><span class="p">:</span> <span class="p">{</span>
-                    <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span><span class="p">:</span> <span class="n">Literal</span><span class="p">(</span>
-                        <span class="bp">cls</span><span class="o">.</span><span class="n">_deserialize_ctor_from_jdict</span>
-                    <span class="p">),</span>
+                    <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span><span class="p">:</span> <span class="n">Literal</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_deserialize_ctor_from_jdict</span><span class="p">),</span>
                     <span class="n">Ctor</span><span class="o">.</span><span class="n">ARGS</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">_serialize_ctor_to_jdict</span><span class="p">(</span><span class="n">x</span><span class="p">)],</span>
                     <span class="n">Ctor</span><span class="o">.</span><span class="n">KWARGS</span><span class="p">:</span> <span class="n">Literal</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span>
                 <span class="p">},</span>
@@ -306,10 +303,7 @@
                 <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">serializer</span><span class="p">(</span><span class="n">ctor_dict</span><span class="p">)</span>
 
         <span class="k">def</span> <span class="nf">visit</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_python_to_json_basic_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_python_to_json_basic_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span><span class="p">:</span>
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">value</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_deconstruct_obj</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">validate_conversion</span><span class="p">)</span>
                 <span class="k">except</span> <span class="n">CtorException</span><span class="p">:</span>
@@ -319,10 +313,7 @@
             <span class="k">return</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span>
 
         <span class="k">def</span> <span class="nf">enter</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_python_to_json_basic_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span>
-            <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">is_python_to_json_basic_type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">Ctor</span><span class="o">.</span><span class="n">CONSTRUCTOR</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">path</span><span class="p">,</span> <span class="kc">False</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">default_enter</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -385,9 +376,7 @@
 <span class="sd">        :param obj: any</span>
 <span class="sd">        :return: boolean</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">))</span>
-        <span class="p">)</span></div>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="kc">None</span><span class="p">)))</span></div>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">is_ctor_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ctor_dict</span><span class="p">):</span>
@@ -436,9 +425,7 @@
 <span class="sd">        :return: ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">s</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span>
-                <span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">deconstruction_specs</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;check_type&#39;</span><span class="p">](</span><span class="n">obj</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">deconstruction_specs</span> <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;check_type&#39;</span><span class="p">](</span><span class="n">obj</span><span class="p">))</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">serializer</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;serializer&#39;</span><span class="p">]</span>
             <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
@@ -449,9 +436,7 @@
                 <span class="k">try</span><span class="p">:</span>
                     <span class="n">validator</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;validate_conversion&#39;</span><span class="p">]</span>
                 <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                    <span class="n">s</span><span class="p">[</span>
-                        <span class="s1">&#39;validate_conversion&#39;</span>
-                    <span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_default_conversion_validation</span>
+                    <span class="n">s</span><span class="p">[</span><span class="s1">&#39;validate_conversion&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_default_conversion_validation</span>
                     <span class="n">validator</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s1">&#39;validate_conversion&#39;</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">validator</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ctor_dict</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="n">CtorException</span><span class="p">(</span>

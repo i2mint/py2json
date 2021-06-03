@@ -19,9 +19,7 @@ def no_dunder_filt(attr):
     return not attr.startswith('__')
 
 
-def items_with_transformed_keys(
-    d, key_trans=lambda x: x, key_cond=lambda: True
-):
+def items_with_transformed_keys(d, key_trans=lambda x: x, key_cond=lambda: True):
     """A generator of (transformed_key, value) items.
 
     :param d: dict (or mapping) to operate on
@@ -133,9 +131,7 @@ class Obj2Dict(object):
             and 'kind' in data
             and len(data) == 2
         ):
-            data = self.obj_of_kind_and_data(
-                kind=data['kind'], data=data['data']
-            )
+            data = self.obj_of_kind_and_data(kind=data['kind'], data=data['data'])
 
         if kind in self.from_data_for_kind:
             return self.from_data_for_kind[kind](data)
@@ -162,9 +158,7 @@ class Obj2Dict(object):
         else:
             assert callable(
                 attr_filt
-            ), "Don't know what to do with that kind of attr_filt: {}".format(
-                attr_filt
-            )
+            ), "Don't know what to do with that kind of attr_filt: {}".format(attr_filt)
 
         d = dict()
         for k in filter(attr_filt, dir(obj)):

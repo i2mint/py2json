@@ -202,12 +202,9 @@ class Ctor(CtorNames):
             },
             {
                 'description': 'for class methods or class constructors',
-                'check_type': lambda x: inspect.ismethod(x)
-                or inspect.isclass(x),
+                'check_type': lambda x: inspect.ismethod(x) or inspect.isclass(x),
                 'spec': {
-                    Ctor.CONSTRUCTOR: Literal(
-                        cls._deserialize_ctor_from_jdict
-                    ),
+                    Ctor.CONSTRUCTOR: Literal(cls._deserialize_ctor_from_jdict),
                     Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
                     Ctor.KWARGS: Literal(None),
                 },
@@ -271,10 +268,7 @@ class Ctor(CtorNames):
                 return cls.serializer(ctor_dict)
 
         def visit(path, key, value):
-            if (
-                not cls.is_python_to_json_basic_type(value)
-                and key != Ctor.CONSTRUCTOR
-            ):
+            if not cls.is_python_to_json_basic_type(value) and key != Ctor.CONSTRUCTOR:
                 try:
                     value = cls._deconstruct_obj(value, validate_conversion)
                 except CtorException:
@@ -284,10 +278,7 @@ class Ctor(CtorNames):
             return key, value
 
         def enter(path, key, value):
-            if (
-                not cls.is_python_to_json_basic_type(value)
-                and key != Ctor.CONSTRUCTOR
-            ):
+            if not cls.is_python_to_json_basic_type(value) and key != Ctor.CONSTRUCTOR:
                 return path, False
             else:
                 return default_enter(path, key, value)
@@ -350,9 +341,7 @@ class Ctor(CtorNames):
         :param obj: any
         :return: boolean
         """
-        return isinstance(
-            obj, (dict, list, tuple, str, int, float, bool, type(None))
-        )
+        return isinstance(obj, (dict, list, tuple, str, int, float, bool, type(None)))
 
     @classmethod
     def is_ctor_dict(cls, ctor_dict):
@@ -401,9 +390,7 @@ class Ctor(CtorNames):
         :return: ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}
         """
         try:
-            s = next(
-                s for s in cls.deconstruction_specs if s['check_type'](obj)
-            )
+            s = next(s for s in cls.deconstruction_specs if s['check_type'](obj))
             try:
                 serializer = s['serializer']
             except KeyError:
@@ -414,9 +401,7 @@ class Ctor(CtorNames):
                 try:
                     validator = s['validate_conversion']
                 except KeyError:
-                    s[
-                        'validate_conversion'
-                    ] = cls._default_conversion_validation
+                    s['validate_conversion'] = cls._default_conversion_validation
                     validator = s['validate_conversion']
                 if validator(obj, ctor_dict) is False:
                     raise CtorException(

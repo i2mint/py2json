@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>py2json.fakit &#8212; py2json 0.1.0 documentation</title>
+    <title>py2json.fakit &#8212; py2json 0.1.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -221,9 +221,7 @@
                     <span class="k">assert</span> <span class="ow">not</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;can only have one args&#39;</span>
                     <span class="n">a</span> <span class="o">=</span> <span class="n">fak</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
 
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;a kind is not a tuple or list: </span><span class="si">{</span><span class="n">fak</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)),</span> <span class="sa">f</span><span class="s1">&#39;a kind is not a tuple or list: </span><span class="si">{</span><span class="n">fak</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;k kind is not a mapping: </span><span class="si">{</span><span class="n">fak</span><span class="si">}</span><span class="s1">&#39;</span>
     <span class="k">return</span> <span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">k</span></div>
 
@@ -332,9 +330,7 @@
     <span class="k">return</span> <span class="n">_fakit</span><span class="p">(</span><span class="o">*</span><span class="n">extract_and_load</span><span class="p">(</span><span class="n">fak</span><span class="p">,</span> <span class="n">func_loader</span><span class="p">))</span></div>
 
 
-<span class="n">fakit</span><span class="o">.</span><span class="n">w_func_loader</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">func_loader</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span>
-    <span class="n">fakit</span><span class="p">,</span> <span class="n">func_loader</span><span class="o">=</span><span class="n">func_loader</span>
-<span class="p">)</span>
+<span class="n">fakit</span><span class="o">.</span><span class="n">w_func_loader</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">func_loader</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">fakit</span><span class="p">,</span> <span class="n">func_loader</span><span class="o">=</span><span class="n">func_loader</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">fakit_if_marked_for_it</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">func_loader</span><span class="o">=</span><span class="n">dflt_func_loader</span><span class="p">):</span>
@@ -378,10 +374,7 @@
 
         <span class="c1"># recurse over inputs to see if there&#39;s some that are expressed with a $fak dict</span>
         <span class="n">a</span> <span class="o">=</span> <span class="p">[</span><span class="n">refakit</span><span class="p">(</span><span class="n">aa</span><span class="p">,</span> <span class="n">func_loader</span><span class="p">,</span> <span class="n">max_levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">aa</span> <span class="ow">in</span> <span class="n">a</span><span class="p">]</span>
-        <span class="n">k</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">kk</span><span class="p">:</span> <span class="n">refakit</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">func_loader</span><span class="p">,</span> <span class="n">max_levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">kk</span><span class="p">,</span> <span class="n">vv</span> <span class="ow">in</span> <span class="n">k</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-        <span class="p">}</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="p">{</span><span class="n">kk</span><span class="p">:</span> <span class="n">refakit</span><span class="p">(</span><span class="n">vv</span><span class="p">,</span> <span class="n">func_loader</span><span class="p">,</span> <span class="n">max_levels</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">kk</span><span class="p">,</span> <span class="n">vv</span> <span class="ow">in</span> <span class="n">k</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
         <span class="k">return</span> <span class="n">fakit</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">k</span><span class="p">),</span> <span class="n">func_loader</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>

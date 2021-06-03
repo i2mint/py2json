@@ -186,9 +186,7 @@ def extract_fak(fak):
                     assert not a, 'can only have one args'
                     a = fak[2]
 
-    assert isinstance(
-        a, (tuple, list)
-    ), f'a kind is not a tuple or list: {fak}'
+    assert isinstance(a, (tuple, list)), f'a kind is not a tuple or list: {fak}'
     assert isinstance(k, Mapping), f'k kind is not a mapping: {fak}'
     return f, a, k
 
@@ -297,9 +295,7 @@ def fakit(fak, func_loader=dflt_func_loader):
     return _fakit(*extract_and_load(fak, func_loader))
 
 
-fakit.w_func_loader = lambda func_loader: partial(
-    fakit, func_loader=func_loader
-)
+fakit.w_func_loader = lambda func_loader: partial(fakit, func_loader=func_loader)
 
 
 def fakit_if_marked_for_it(x, func_loader=dflt_func_loader):
@@ -343,10 +339,7 @@ def refakit(x, func_loader=dflt_func_loader, max_levels=inf):
 
         # recurse over inputs to see if there's some that are expressed with a $fak dict
         a = [refakit(aa, func_loader, max_levels - 1) for aa in a]
-        k = {
-            kk: refakit(vv, func_loader, max_levels - 1)
-            for kk, vv in k.items()
-        }
+        k = {kk: refakit(vv, func_loader, max_levels - 1) for kk, vv in k.items()}
 
         return fakit((f, a, k), func_loader)
     elif isinstance(x, list):

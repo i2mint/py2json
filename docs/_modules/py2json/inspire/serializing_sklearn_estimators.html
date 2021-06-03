@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>py2json.inspire.serializing_sklearn_estimators &#8212; py2json 0.1.0 documentation</title>
+    <title>py2json.inspire.serializing_sklearn_estimators &#8212; py2json 0.1.1 documentation</title>
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
@@ -64,9 +64,7 @@
 <span class="sd">    ...      assert estimator_names == expected</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">funcs</span><span class="p">:</span>
-        <span class="n">required_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span>
-            <span class="n">self_name</span>
-        <span class="p">}</span>
+        <span class="n">required_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="p">{</span><span class="n">self_name</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">func_to_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">required_args</span> <span class="o">-=</span> <span class="n">func_to_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">required_args</span><span class="p">:</span>
@@ -95,9 +93,7 @@
     <span class="p">],</span>
     <span class="s1">&#39;steps&#39;</span><span class="p">:</span> <span class="p">[(</span><span class="s1">&#39;PCA&#39;</span><span class="p">,</span> <span class="n">PCA</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;ElasticNetCV&#39;</span><span class="p">,</span> <span class="n">ElasticNetCV</span><span class="p">)],</span>
     <span class="s1">&#39;param_grid&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;kernel&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;linear&#39;</span><span class="p">,</span> <span class="s1">&#39;rbf&#39;</span><span class="p">),</span> <span class="s1">&#39;C&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">]},</span>
-    <span class="s1">&#39;param_distributions&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span>
-        <span class="n">C</span><span class="o">=</span><span class="n">uniform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">penalty</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="s1">&#39;l1&#39;</span><span class="p">]</span>
-    <span class="p">),</span>
+    <span class="s1">&#39;param_distributions&#39;</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">C</span><span class="o">=</span><span class="n">uniform</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">penalty</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;l2&#39;</span><span class="p">,</span> <span class="s1">&#39;l1&#39;</span><span class="p">]),</span>
 <span class="p">}</span>
 
 <span class="n">estimator_cls_val_for_argname</span> <span class="o">=</span> <span class="n">UserDict</span><span class="p">(</span><span class="n">estimator_cls_val_for_argname</span><span class="p">)</span>
@@ -228,10 +224,7 @@
     <span class="n">init_params_for_cls</span><span class="o">=</span><span class="n">estimator_cls_to_kwargs</span><span class="p">,</span>  <span class="c1"># Returns valid params to initialize an estimator_cls</span>
     <span class="n">xy_for_learner</span><span class="o">=</span><span class="n">dflt_xy_for_learner</span><span class="p">,</span>  <span class="c1"># Returns an (X, y) pair for the learner to fit on</span>
     <span class="n">mk_alt_model</span><span class="o">=</span><span class="n">dflt_mk_alt_model</span><span class="p">,</span>  <span class="c1"># Returns an alt object by serializing and deserializing the fitted model</span>
-    <span class="n">methods</span><span class="o">=</span><span class="p">(</span>
-        <span class="s1">&#39;predict&#39;</span><span class="p">,</span>
-        <span class="s1">&#39;transform&#39;</span><span class="p">,</span>
-    <span class="p">),</span>  <span class="c1"># The methods to use to make behavior_funcs,</span>
+    <span class="n">methods</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;predict&#39;</span><span class="p">,</span> <span class="s1">&#39;transform&#39;</span><span class="p">,),</span>  <span class="c1"># The methods to use to make behavior_funcs,</span>
     <span class="n">output_comp</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">,</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`</span>
@@ -347,8 +340,7 @@
         <span class="k">for</span> <span class="n">estimator_cls</span> <span class="ow">in</span> <span class="n">estimator_classes</span><span class="p">:</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">for</span> <span class="n">kws</span> <span class="ow">in</span> <span class="n">behavioral_test_kwargs_for_estimator</span><span class="p">(</span>
-                    <span class="n">estimator_cls</span><span class="p">,</span>
-                    <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
+                    <span class="n">estimator_cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_for_behavioral_test_kwargs_for_estimator</span><span class="p">,</span>
                 <span class="p">):</span>
                     <span class="k">try</span><span class="p">:</span>
                         <span class="k">if</span> <span class="n">is_behaviorally_equivalent</span><span class="p">(</span><span class="o">**</span><span class="n">kws</span><span class="p">):</span>
@@ -361,15 +353,10 @@
                             <span class="p">)</span>
                     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
                         <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
-                            <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_in_test&#39;</span><span class="p">,</span>
-                            <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span>
-                            <span class="n">kws</span><span class="o">=</span><span class="n">kws</span><span class="p">,</span>
-                            <span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
+                            <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_in_test&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">kws</span><span class="o">=</span><span class="n">kws</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">,</span>
                         <span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span>
-                    <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_making_test_kws&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">e</span>
-                <span class="p">)</span>
+                <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;error_making_test_kws&#39;</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="n">estimator_cls</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="n">e</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">estimator_test_df</span><span class="p">(</span>

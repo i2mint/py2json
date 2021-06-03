@@ -43,6 +43,4 @@ specs_for_kind = {
 
 def mk_serializer_and_deserializer_for_kind(kind='jdict_methods'):
     specs_dict = specs_for_kind[kind]
-    return mk_serializer_and_deserializer(
-        specs_dict['spec'], specs_dict['mk_inv_spec']
-    )
+    return mk_serializer_and_deserializer(specs_dict['spec'], specs_dict['mk_inv_spec'])

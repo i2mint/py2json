@@ -77,9 +77,7 @@ def mk_serializer_and_deserializer_for_types_map(types_map):
 # TODO: much to factor out into a mini-language here
 # TODO: See how the specs complexify if we want to use orient='records' kw in DataFrame (de)serialization
 type_cond_map = {
-    numpy.ndarray: lambda x: {
-        '$fak': ('numpy.array', (numpy.ndarray.tolist(x),))
-    },
+    numpy.ndarray: lambda x: {'$fak': ('numpy.array', (numpy.ndarray.tolist(x),))},
     pandas.DataFrame: lambda x: {
         '$fak': {
             'f': 'pandas.DataFrame.from_dict',
@@ -148,27 +146,19 @@ def mk_serializer_and_deserializer_from_instance_and_methods(
     def get_needed_attrs():
         for method in filter(cls_has_attr, methods):
             target_func = getattr(cls, method)
-            for attr in filter(
-                instance_has_attr, attrs_used_by_method(target_func)
-            ):
+            for attr in filter(instance_has_attr, attrs_used_by_method(target_func)):
                 yield attr
 
     deserialize_to_cls = deserialize_to_cls or cls
     serializer = partial(
-        serialized_attr_dict,
-        serializer=fak_serialize,
-        attrs=get_needed_attrs(),
+        serialized_attr_dict, serializer=fak_serialize, attrs=get_needed_attrs(),
     )
     deserializer = partial(
-        deserialize_as_obj,
-        deserializer=fak_deserialize,
-        cls=deserialize_to_cls,
+        deserialize_as_obj, deserializer=fak_deserialize, cls=deserialize_to_cls,
     )
 
     if jsonize:
-        serializer = postprocess(json.dumps, verbose_error_message=2)(
-            serializer
-        )
+        serializer = postprocess(json.dumps, verbose_error_message=2)(serializer)
         deserializer = preprocess(json.loads)(deserializer)
 
     return serializer, deserializer
@@ -186,10 +176,7 @@ from sklearn.datasets import make_blobs
 X, y = make_blobs()
 model = PCA().fit(X)
 
-(
-    serialize,
-    deserialize,
-) = mk_serializer_and_deserializer_from_instance_and_methods(
+(serialize, deserialize,) = mk_serializer_and_deserializer_from_instance_and_methods(
     model, methods=['predict', 'transform'], deserialize_to_cls=None
 )
 
@@ -202,9 +189,7 @@ if hasattr(model, 'transform'):
 else:
     target_func = model.__class__.predict
 
-assert numpy.allclose(
-    target_func(deserialized_model, X), target_func(model, X)
-)
+assert numpy.allclose(target_func(deserialized_model, X), target_func(model, X))
 
 
 # and in case you forgot the equivalence:
@@ -229,22 +214,15 @@ def mk_serialize_deserialize_pipeline_for_model(
 
 from py2json.inspire.serializing_sklearn_estimators import estimator_test_df
 
-mk_alt_model = lambda model: mk_serialize_deserialize_pipeline_for_model(
-    model
-)(model)
+mk_alt_model = lambda model: mk_serialize_deserialize_pipeline_for_model(model)(model)
 
 kwargs_for_behavioral_test_kwargs_for_estimator = dict(
     mk_alt_model=mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
-    methods=(
-        'predict',
-        'transform',
-    ),  # The methods to use to make behavior_funcs,
+    methods=('predict', 'transform',),  # The methods to use to make behavior_funcs,
 )
 
 
-def test_estimators_serialization(
-    estimator_classes=None, ignore_warnings=True
-):
+def test_estimators_serialization(estimator_classes=None, ignore_warnings=True):
     return estimator_test_df(
         estimator_classes,
         ignore_warnings=ignore_warnings,
@@ -261,9 +239,7 @@ def get_estimator_classes_that_are_behaviorally_equivalent_wrt_fakit():
 if __name__ == '__main__':
     from collections import Counter
     import pandas as pd
-    from py2json.inspire.serializing_sklearn_estimators import (
-        all_estimator_classes,
-    )
+    from py2json.inspire.serializing_sklearn_estimators import all_estimator_classes
 
     n = len(all_estimator_classes)
     print(f'Testing all {n} estimators...')

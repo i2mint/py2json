@@ -36,9 +36,7 @@ def missing_args_func(func_to_kwargs=None, ignore=None):
     """
 
     def missing_args_func_(func):
-        missing_args = set(Sig(func).without_defaults.parameters) - set(
-            ignore or ()
-        )
+        missing_args = set(Sig(func).without_defaults.parameters) - set(ignore or ())
         if func_to_kwargs is not None:
             missing_args -= func_to_kwargs(func).keys()
         return missing_args
@@ -208,9 +206,7 @@ def is_types_spec(types) -> bool:
 def mk_isinstance_cond(types) -> Callable[[Any], bool]:
     """Makes a boolean function that verifies if objects are of a target type (or types)"""
 
-    assert is_types_spec(
-        types
-    ), f'types need to be a single or an iterable of types'
+    assert is_types_spec(types), f'types need to be a single or an iterable of types'
 
     def isinstance_of_target_types(obj):
         return isinstance(obj, types)

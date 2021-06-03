@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>py2json.util &#8212; py2json 0.1.0 documentation</title>
+    <title>py2json.util &#8212; py2json 0.1.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -71,9 +71,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">missing_args_func_</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
-        <span class="n">missing_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span>
-            <span class="n">ignore</span> <span class="ow">or</span> <span class="p">()</span>
-        <span class="p">)</span>
+        <span class="n">missing_args</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">without_defaults</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">ignore</span> <span class="ow">or</span> <span class="p">())</span>
         <span class="k">if</span> <span class="n">func_to_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">missing_args</span> <span class="o">-=</span> <span class="n">func_to_kwargs</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">missing_args</span>
@@ -243,9 +241,7 @@
 <div class="viewcode-block" id="mk_isinstance_cond"><a class="viewcode-back" href="../../module_docs/py2json/util.html#py2json.util.mk_isinstance_cond">[docs]</a><span class="k">def</span> <span class="nf">mk_isinstance_cond</span><span class="p">(</span><span class="n">types</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Makes a boolean function that verifies if objects are of a target type (or types)&quot;&quot;&quot;</span>
 
-    <span class="k">assert</span> <span class="n">is_types_spec</span><span class="p">(</span>
-        <span class="n">types</span>
-    <span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;types need to be a single or an iterable of types&#39;</span>
+    <span class="k">assert</span> <span class="n">is_types_spec</span><span class="p">(</span><span class="n">types</span><span class="p">),</span> <span class="sa">f</span><span class="s1">&#39;types need to be a single or an iterable of types&#39;</span>
 
     <span class="k">def</span> <span class="nf">isinstance_of_target_types</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">types</span><span class="p">)</span>

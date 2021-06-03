@@ -29,9 +29,7 @@ def funcs_that_need_args(funcs, func_to_kwargs=None, self_name=None):
     ...      assert estimator_names == expected
     """
     for func in funcs:
-        required_args = set(Sig(func).without_defaults.parameters) - {
-            self_name
-        }
+        required_args = set(Sig(func).without_defaults.parameters) - {self_name}
         if func_to_kwargs is not None:
             required_args -= func_to_kwargs(func).keys()
         if required_args:
@@ -60,9 +58,7 @@ estimator_cls_val_for_argname = {
     ],
     'steps': [('PCA', PCA), ('ElasticNetCV', ElasticNetCV)],
     'param_grid': {'kernel': ('linear', 'rbf'), 'C': [1, 10]},
-    'param_distributions': dict(
-        C=uniform(loc=0, scale=4), penalty=['l2', 'l1']
-    ),
+    'param_distributions': dict(C=uniform(loc=0, scale=4), penalty=['l2', 'l1']),
 }
 
 estimator_cls_val_for_argname = UserDict(estimator_cls_val_for_argname)
@@ -193,10 +189,7 @@ def behavioral_test_kwargs_for_estimator(
     init_params_for_cls=estimator_cls_to_kwargs,  # Returns valid params to initialize an estimator_cls
     xy_for_learner=dflt_xy_for_learner,  # Returns an (X, y) pair for the learner to fit on
     mk_alt_model=dflt_mk_alt_model,  # Returns an alt object by serializing and deserializing the fitted model
-    methods=(
-        'predict',
-        'transform',
-    ),  # The methods to use to make behavior_funcs,
+    methods=('predict', 'transform',),  # The methods to use to make behavior_funcs,
     output_comp=np.allclose,
 ):
     """Generate `is_behaviorally_equivalent` kwargs from `estimator_cls`
@@ -312,8 +305,7 @@ def test_estimators(
         for estimator_cls in estimator_classes:
             try:
                 for kws in behavioral_test_kwargs_for_estimator(
-                    estimator_cls,
-                    **kwargs_for_behavioral_test_kwargs_for_estimator,
+                    estimator_cls, **kwargs_for_behavioral_test_kwargs_for_estimator,
                 ):
                     try:
                         if is_behaviorally_equivalent(**kws):
@@ -326,15 +318,10 @@ def test_estimators(
                             )
                     except Exception as e:
                         yield dict(
-                            kind='error_in_test',
-                            cls=estimator_cls,
-                            kws=kws,
-                            error=e,
+                            kind='error_in_test', cls=estimator_cls, kws=kws, error=e,
                         )
             except Exception as e:
-                yield dict(
-                    kind='error_making_test_kws', cls=estimator_cls, error=e
-                )
+                yield dict(kind='error_making_test_kws', cls=estimator_cls, error=e)
 
 
 def estimator_test_df(
