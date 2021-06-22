@@ -1,3 +1,11 @@
+"""A basic JSON encoder to handle numpy and bytes types
+
+>>> bool_array = np.array([True])
+>>> bool_value = bool_array[0]
+>>> obj = {'an_array': np.array(['a']), 'an_int64': np.int64(1), 'some_bytes': b'a', 'a_bool': bool_value}
+>>> assert dumps(obj)
+"""
+
 import base64
 import json
 from functools import partial
