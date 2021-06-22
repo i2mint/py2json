@@ -4,6 +4,7 @@
 
    module_docs/py2json
    module_docs/py2json/ctor
+   module_docs/py2json/encoders
    module_docs/py2json/fakit
    module_docs/py2json/inspire
    module_docs/py2json/inspire/attribute_tree

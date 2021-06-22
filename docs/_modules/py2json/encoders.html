@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>py2json.encoders &#8212; py2json 0.1.2 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for py2json.encoders</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;A basic JSON encoder to handle numpy and bytes types</span>
+
+<span class="sd">&gt;&gt;&gt; bool_array = np.array([True])</span>
+<span class="sd">&gt;&gt;&gt; bool_value = bool_array[0]</span>
+<span class="sd">&gt;&gt;&gt; obj = {&#39;an_array&#39;: np.array([&#39;a&#39;]), &#39;an_int64&#39;: np.int64(1), &#39;some_bytes&#39;: b&#39;a&#39;, &#39;a_bool&#39;: bool_value}</span>
+<span class="sd">&gt;&gt;&gt; assert dumps(obj)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="OtoJsonEncoder"><a class="viewcode-back" href="../../module_docs/py2json/encoders.html#py2json.encoders.OtoJsonEncoder">[docs]</a><span class="k">class</span> <span class="nc">OtoJsonEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+<div class="viewcode-block" id="OtoJsonEncoder.default"><a class="viewcode-back" href="../../module_docs/py2json/encoders.html#py2json.encoders.OtoJsonEncoder.default">[docs]</a>    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">int64</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span> <span class="o">==</span> <span class="n">obj</span> <span class="k">else</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div></div>
+
+
+<span class="n">json_dump_partial_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;allow_nan&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="s1">&#39;indent&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="s1">&#39;separators&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;:&#39;</span><span class="p">),</span>
+    <span class="s1">&#39;sort_keys&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s1">&#39;cls&#39;</span><span class="p">:</span> <span class="n">OtoJsonEncoder</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">dump</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">,</span> <span class="o">**</span><span class="n">json_dump_partial_kwargs</span><span class="p">)</span>
+<span class="n">dumps</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">,</span> <span class="o">**</span><span class="n">json_dump_partial_kwargs</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">py2json</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/encoders.html">py2json.encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;NO COPYRIGHT.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
