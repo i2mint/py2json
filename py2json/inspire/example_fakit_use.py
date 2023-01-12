@@ -37,7 +37,7 @@ import numpy
 import pandas
 from py2json.fakit import refakit
 
-from py2json.util import is_types_spec, Literal
+from py2json.util import is_types_spec
 from py2json.fakit import is_valid_fak
 from i2.deco import postprocess, preprocess
 
