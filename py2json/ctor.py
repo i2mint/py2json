@@ -234,7 +234,7 @@ class Ctor(CtorNames):
 
         def enter(path, key, value):
             if cls.is_ctor_dict(value):
-                return path, False
+                return None, False
             else:
                 return default_enter(path, key, value)
 
@@ -368,13 +368,21 @@ class Ctor(CtorNames):
     @classmethod
     def _construct_obj(cls, ctor_dict):
         """
-        Calls the Ctor.CONSTRUCTOR with given Ctor.ARGS and Ctor.KWARGS
+        Calls the Ctor.CONSTRUCTOR with given Ctor.ARGS and Ctor.KWARGS.
+        Checks if ARGS or KWARGS are ctor_dicts and constructs those first
+
         :param ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}
         :return: ctor_dict[Ctor.CONSTRUCTOR](*ctor_dict[Ctor.ARGS], **ctor_dict[Ctor.KWARGS])
         """
         if cls.is_ctor_dict(ctor_dict):
-            args = cls._get_value(ctor_dict, cls.ARGS, [])
-            kwargs = cls._get_value(ctor_dict, cls.KWARGS, {})
+            args = [
+                cls._construct_obj(_a) if cls.is_ctor_dict(_a) else _a
+                for _a in cls._get_value(ctor_dict, cls.ARGS, [])
+            ]
+            kwargs = {
+                _k: cls._construct_obj(_v) if cls.is_ctor_dict(_v) else _v
+                for _k, _v in cls._get_value(ctor_dict, cls.KWARGS, {}).items()
+            }
             return ctor_dict[cls.CONSTRUCTOR](*args, **kwargs)
         else:
             raise CtorException(
