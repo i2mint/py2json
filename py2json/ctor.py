@@ -279,7 +279,7 @@ class Ctor(CtorNames):
 
         def enter(path, key, value):
             if not cls.is_python_to_json_basic_type(value) and key != Ctor.CONSTRUCTOR:
-                return path, False
+                return None, False
             else:
                 return default_enter(path, key, value)
 
@@ -375,14 +375,11 @@ class Ctor(CtorNames):
         :return: ctor_dict[Ctor.CONSTRUCTOR](*ctor_dict[Ctor.ARGS], **ctor_dict[Ctor.KWARGS])
         """
         if cls.is_ctor_dict(ctor_dict):
-            args = [
-                cls._construct_obj(_a) if cls.is_ctor_dict(_a) else _a
-                for _a in cls._get_value(ctor_dict, cls.ARGS, [])
-            ]
-            kwargs = {
-                _k: cls._construct_obj(_v) if cls.is_ctor_dict(_v) else _v
-                for _k, _v in cls._get_value(ctor_dict, cls.KWARGS, {}).items()
-            }
+            if args := cls._get_value(ctor_dict, cls.ARGS, []):
+                args = cls.construct(args)
+            if kwargs := cls._get_value(ctor_dict, cls.KWARGS, {}):
+                kwargs = cls.construct(kwargs)
+
             return ctor_dict[cls.CONSTRUCTOR](*args, **kwargs)
         else:
             raise CtorException(
@@ -392,7 +389,9 @@ class Ctor(CtorNames):
     @classmethod
     def _deconstruct_obj(cls, obj, validate_conversion: bool = False):
         """
-        Breakdown an obj into a ctor_dict as described by deconstruction_specs
+        Breakdown an obj into a ctor_dict as described by deconstruction_specs.
+        Further breakdowns on deconstructed ARGS and KWARGS if necessary.
+
         :param obj: any object satisfying one of the deconstruction_specs
         :param validate_conversion: [boolean] True to compare obj to reconstructed ctor_dict. False to skip validation
         :return: ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}
@@ -405,6 +404,16 @@ class Ctor(CtorNames):
                 s['serializer'] = mk_serializer_and_deserializer(s['spec'])
                 serializer = s['serializer']
             ctor_dict = serializer(obj)
+
+            if ctor_dict[Ctor.ARGS] is not None:
+                ctor_dict[Ctor.ARGS] = cls.deconstruct(
+                    ctor_dict[Ctor.ARGS], validate_conversion=validate_conversion
+                )
+            if ctor_dict[Ctor.KWARGS] is not None:
+                ctor_dict[Ctor.KWARGS] = cls.deconstruct(
+                    ctor_dict[Ctor.KWARGS], validate_conversion=validate_conversion
+                )
+
             if validate_conversion is True:
                 try:
                     validator = s['validate_conversion']
