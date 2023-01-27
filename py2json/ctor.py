@@ -216,29 +216,35 @@ class Ctor(CtorNames):
 
     @classmethod
     def construct(cls, obj):
-        """
+        """Construct ctor objs. Return obj with no action if obj is str, int, float, bool, or None.
 
         :param obj: ctor_dict or jdict
         :return: remap obj with constructed ctor_dicts
         """
-        if cls.is_jdict(obj):
+        if cls.is_supported_by_default_remap(obj) and cls.is_jdict(obj):
             obj = cls.deserializer(obj)
 
         if cls.is_ctor_dict(obj):
             return cls._construct_obj(obj)
 
-        def visit(path, key, value):
-            if cls.is_ctor_dict(value):
-                value = cls._construct_obj(value)
-            return key, value
+        if cls.is_supported_by_default_remap(obj):
 
-        def enter(path, key, value):
-            if cls.is_ctor_dict(value):
-                return None, False
-            else:
-                return default_enter(path, key, value)
+            def visit(path, key, value):
+                if cls.is_ctor_dict(value):
+                    value = cls._construct_obj(value)
+                return key, value
 
-        return remap(obj, visit, enter=enter)
+            def enter(path, key, value):
+                if cls.is_ctor_dict(value):
+                    return None, False
+                else:
+                    return default_enter(path, key, value)
+
+            return remap(obj, visit, enter=enter)
+        elif cls.is_python_to_json_basic_type(obj):
+            return obj
+        else:
+            CtorException(f'Cannot construct unknown obj type: {type(obj)}')
 
     @classmethod
     def deconstruct(
@@ -249,6 +255,7 @@ class Ctor(CtorNames):
     ):
         """
         Remap a nested structure by deconstructing nodes of non-basic types into ctor_dicts using the deconstruction_specs
+
         :param obj: any object containing only basic types and those described in the deconstruction_specs
         :param validate_conversion: [boolean] True to compare obj to reconstructed ctor_dict. False to skip validation
         :param output_type: Ctor.JSON_DICT or Ctor.CTOR_DICT
@@ -261,6 +268,9 @@ class Ctor(CtorNames):
             )
 
         if not cls.is_supported_by_default_remap(obj):
+            if cls.is_python_to_json_basic_type(obj):
+                return obj
+
             ctor_dict = cls._deconstruct_obj(obj)
             if output_type == Ctor.CTOR_DICT:
                 return ctor_dict
@@ -338,6 +348,7 @@ class Ctor(CtorNames):
     def is_python_to_json_basic_type(cls, obj):
         """
         Check if JSONEncoder supports the object type by default.
+
         :param obj: any
         :return: boolean
         """
