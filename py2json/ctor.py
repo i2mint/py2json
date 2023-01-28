@@ -1,4 +1,11 @@
-"""Tools for serialization and deserialization.
+"""Tools for serialization and deserialization by Andie
+
+The two main methods to be aware of are Ctor.deconstruct() and Ctor.construct(). Ideally, that's all
+you need to use to break down any object into an objest ready for json.dumps() and reconstruct back
+to an equivalent object.
+
+Include to_jdict() and from_jdict() for an easy way to make a custom class instance work with this.
+Otherwise, it will attempt to pickle any unhandled types.
 
 An example with numpy arrays:
 
@@ -9,7 +16,7 @@ An example with numpy arrays:
 >>> a_recon_from_jdict = Ctor.construct(a_decon_jdict)
 >>> assert np.allclose(a, a_recon_from_ctor_dict, a_recon_from_jdict)
 
-Another example (not runnable, since dependent on some third party code
+Another example not runnable, since dependent on some third party code
 
 ```
 from ... .source.audio import PyAudioSourceReader
@@ -30,6 +37,7 @@ import inspect
 import json
 from typing import Callable
 
+import dill
 import numpy as np
 from boltons.iterutils import remap, default_enter
 from glom import Literal, glom, Spec
@@ -138,6 +146,14 @@ ctor_to_jdict_spec = {
 )
 
 
+def dill_dump_string(x):
+    return dill.dumps(x).decode('latin-1')
+
+
+def dill_load_string(x):
+    return dill.loads(x.encode('latin-1'))
+
+
 class CtorException(ValueError):
     pass
 
@@ -168,6 +184,22 @@ class Ctor(CtorNames):
         return _deserialize_ctor_from_jdict(ctor_jdict)
 
     @classproperty
+    def fallback_deconstruction_spec(cls):
+        """Try to pickle when no deconstruction spec is found"""
+        return {
+            'description': 'default to dill pickle',
+            'check_type': lambda x: True,
+            'spec': {
+                Ctor.CONSTRUCTOR: Literal(dill_load_string),
+                Ctor.ARGS: lambda x: [dill_dump_string(x)],
+                Ctor.KWARGS: Literal(None),
+            },
+            'validate_conversion': lambda x, serialized_x: (
+                x == Ctor._construct_obj(serialized_x)
+            ),
+        }
+
+    @classproperty
     def deconstruction_specs(cls):
         """
         Return a list of deconstruction_specs=dict(description='doc string',
@@ -184,8 +216,8 @@ class Ctor(CtorNames):
                     Ctor.ARGS: lambda x: [x.tolist()],
                     Ctor.KWARGS: Literal(None),
                 },
-                'validate_conversion': lambda x, serialized_x: np.allclose(
-                    x, Ctor._construct_obj(serialized_x)
+                'validate_conversion': lambda x, serialized_x: (
+                    np.allclose(x, Ctor._construct_obj(serialized_x))
                 ),
             },
             {
@@ -197,8 +229,9 @@ class Ctor(CtorNames):
                     Ctor.ARGS: lambda x: [x.to_jdict()],
                     Ctor.KWARGS: Literal(None),
                 },
-                'validate_conversion': lambda x, serialized_x: x.to_jdict()
-                == Ctor._construct_obj(serialized_x).to_jdict(),
+                'validate_conversion': lambda x, serialized_x: (
+                    x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
+                ),
             },
             {
                 'description': 'for class methods or class constructors',
@@ -208,9 +241,15 @@ class Ctor(CtorNames):
                     Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
                     Ctor.KWARGS: Literal(None),
                 },
-                'validate_conversion': lambda x, serialized_x: np.allclose(
-                    x, Ctor._construct_obj(serialized_x)
-                ),
+            },
+            {
+                'description': 'for functions',
+                'check_type': inspect.isfunction,
+                'spec': {
+                    Ctor.CONSTRUCTOR: Literal(cls._deserialize_ctor_from_jdict),
+                    Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
+                    Ctor.KWARGS: Literal(None),
+                },
             },
         ]
 
@@ -399,9 +438,11 @@ class Ctor(CtorNames):
 
     @classmethod
     def _deconstruct_obj(cls, obj, validate_conversion: bool = False):
-        """
-        Breakdown an obj into a ctor_dict as described by deconstruction_specs.
+        """Breakdown an obj into a ctor_dict as described by deconstruction_specs.
         Further breakdowns on deconstructed ARGS and KWARGS if necessary.
+
+        Will use fallback_deconstruction_spec to dill pickle object if no spec is found.
+        Validation is always performed in this fallback case.
 
         :param obj: any object satisfying one of the deconstruction_specs
         :param validate_conversion: [boolean] True to compare obj to reconstructed ctor_dict. False to skip validation
@@ -414,6 +455,7 @@ class Ctor(CtorNames):
             except KeyError:
                 s['serializer'] = mk_serializer_and_deserializer(s['spec'])
                 serializer = s['serializer']
+
             ctor_dict = serializer(obj)
 
             if ctor_dict[Ctor.ARGS] is not None:
@@ -426,21 +468,33 @@ class Ctor(CtorNames):
                 )
 
             if validate_conversion is True:
-                try:
-                    validator = s['validate_conversion']
-                except KeyError:
-                    s['validate_conversion'] = cls._default_conversion_validation
-                    validator = s['validate_conversion']
-                if validator(obj, ctor_dict) is False:
-                    raise CtorException(
-                        f'deconstruction validation test failed for: {obj}'
-                    )
+                cls._validate_conversion(obj, ctor_dict, s)
 
             return ctor_dict
         except (StopIteration, KeyError):
-            raise CtorException(
-                f'deconstruction spec not found for non-basic type: {obj}'
-            )
+            try:
+                s = cls.fallback_deconstruction_spec
+                serializer = mk_serializer_and_deserializer(s['spec'])
+                ctor_dict = serializer(obj)
+                cls._validate_conversion(obj, ctor_dict, s)
+                return ctor_dict
+
+            except Exception as e:
+                raise CtorException(
+                    f'deconstruction spec not found for non-basic type: {obj}'
+                ) from e
+
+    @classmethod
+    def _validate_conversion(cls, obj, ctor_dict, deconstruction_spec):
+        try:
+            validator = deconstruction_spec['validate_conversion']
+        except KeyError:
+            deconstruction_spec[
+                'validate_conversion'
+            ] = cls._default_conversion_validation
+            validator = deconstruction_spec['validate_conversion']
+        if validator(obj, ctor_dict) is False:
+            raise CtorException(f'deconstruction validation test failed for: {obj}')
 
     @classmethod
     def _get_value(cls, dict_obj, key, default_value):
