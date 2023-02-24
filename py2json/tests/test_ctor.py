@@ -62,6 +62,8 @@ def test_ctor_class():
     deserialized = Ctor.construct(serialized)
     print(f'deserialized: {deserialized}')
     assert original == deserialized
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_function():
@@ -75,6 +77,8 @@ def test_ctor_function():
     print(f'deserialized: {deserialized}')
     assert original == deserialized
     assert original(1, 2) == deserialized(1, 2)
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_class_method():
@@ -87,6 +91,8 @@ def test_ctor_class_method():
     deserialized = Ctor.construct(serialized)
     print(f'deserialized: {deserialized}')
     assert original == deserialized
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_to_and_from_jdict():
@@ -98,6 +104,8 @@ def test_ctor_to_and_from_jdict():
     deserialized = Ctor.construct(serialized)
     print(f'deserialized: {deserialized}')
     assert original == deserialized
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_numpy_array():
@@ -110,6 +118,8 @@ def test_ctor_numpy_array():
     deserialized = Ctor.construct(serialized)
     print(f'deserialized: {deserialized}')
     assert np.allclose(original, deserialized)
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_fallback_dill_pickle_class_instance():
@@ -121,6 +131,8 @@ def test_ctor_fallback_dill_pickle_class_instance():
     deserialized = Ctor.construct(serialized)
     print(f'deserialized: {deserialized}')
     assert original == deserialized
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_dict():

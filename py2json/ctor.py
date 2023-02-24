@@ -1,5 +1,7 @@
 """Tools for serialization and deserialization by Andie
 
+Ctor short for constructor.
+
 The two main methods to be aware of are Ctor.deconstruct() and Ctor.construct(). Ideally, that's all
 you need to use to break down any object into an objest ready for json.dumps() and reconstruct back
 to an equivalent object.
@@ -27,20 +29,134 @@ c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.J
 c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict)
 c_recon_from_jdict = Ctor.construct(c_decon_jdict)
 assert c == c_recon_from_jdict == c_recon_from_ctor_dict
-```
 
+The Design
+
+`Ctor.deconstruct()` will traverse through objects supported by remap (list, tuple, dict, set)
+to find objects foreign to json and deconstruct them using `Ctor.deconstruction_specs`.
+Specified object are deconstructed into a CtorDict containing CONSTRUCTOR, ARGS, and KWARGS.
+
+Converting a function to a CtorDict results in the CONSTRUCTOR as the Ctor deserializing method
+and the ARGS as the import path of the deconstructed function.
+
+>>> from pprint import pprint
+>>> from py2json.tests.test_ctor import add
+>>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
+>>> pprint(serialized, sort_dicts=False)
+{'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+ 'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
+ 'KWARGS': None}
+
+By default, the output type is a json dict. The CONSTRUCTOR method is reduced to an import path.
+
+>>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.JSON_DICT)
+>>> pprint(serialized, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'ctor',
+                 'name': 'Ctor',
+                 'attr': '_deserialize_ctor_from_jdict'},
+ 'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
+ 'KWARGS': None}
+
+Ideally, a custom class will include `to_jdict` and `from_jdict` methods
+
+>>> from py2json.tests.test_ctor import TestToJdict
+>>> instance = TestToJdict('test_value')
+>>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
+>>> pprint(serialized, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
+                 'name': 'TestToJdict',
+                 'attr': 'from_jdict'},
+ 'ARGS': [{'value': 'test_value'}],
+ 'KWARGS': None}
+
+As a fallback, dill is used when no matching deconstruction_specs is found.
+`CtorException` is thrown if it fails.
+
+>>> from py2json.tests.test_ctor import TestClass
+>>> instance = TestClass('test_value')
+>>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
+>>> pprint(serialized, sort_dicts=False) # doctest: +SKIP
+{'CONSTRUCTOR': {'module': 'ctor', 'name': 'dill_load_string', 'attr': None},
+ 'ARGS': ['\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00\x8c\x17py2json.tests.test_ctor\x94\x8c\t'
+          'TestClass\x94\x93\x94)\x81\x94}\x94\x8c\x05value\x94\x8c\n'
+          'test_value\x94sb.'],
+ 'KWARGS': None}
+
+
+Ctor.deconstruct will also check if the deconstructed args need to be deconstructed as well.
+In this example, the object deconstructs with ARGS that also contain to_jdict/from_jdict
+
+>>> from py2json.tests.test_ctor import TestToJdict
+>>> instance = TestToJdict([TestToJdict('test_value')])
+>>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
+>>> pprint(serialized, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
+                 'name': 'TestToJdict',
+                 'attr': 'from_jdict'},
+ 'ARGS': [{'value': [{'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
+                                      'name': 'TestToJdict',
+                                      'attr': 'from_jdict'},
+                      'ARGS': [{'value': 'test_value'}],
+                      'KWARGS': None}]}],
+ 'KWARGS': None}
+
+
+Function calls can also be serialized
+
+>>> import os
+>>> ctor_jdict = Ctor.to_ctor_dict(constructor=os.path.join, args=['I', 'am', 'a', 'filepath'])
+>>> pprint(ctor_jdict, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'posixpath', 'name': 'join', 'attr': None},
+ 'ARGS': ['I', 'am', 'a', 'filepath'],
+ 'KWARGS': {}}
+>>> Ctor.construct(ctor_jdict)
+'I/am/a/filepath'
+
+You can pass args
+>>> from collections import namedtuple
+>>> ctor_jdict = Ctor.to_ctor_dict(namedtuple, args=('A', 'x y z'))
+>>> pprint(ctor_jdict, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'collections', 'name': 'namedtuple', 'attr': None},
+ 'ARGS': ('A', 'x y z'),
+ 'KWARGS': {}}
+>>> A = Ctor.construct(ctor_jdict)
+>>> A('no', 'defaults', 'here')
+A(x='no', y='defaults', z='here')
+
+...or kwargs
+>>> ctor_jdict = Ctor.to_ctor_dict(namedtuple, kwargs={'typename': 'A', 'field_names': 'x y z'})
+>>> pprint(ctor_jdict, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'collections', 'name': 'namedtuple', 'attr': None},
+ 'ARGS': [],
+ 'KWARGS': {'typename': 'A', 'field_names': 'x y z'}}
+>>> A = Ctor.construct(ctor_jdict)
+>>> A('no', 'defaults', 'here')
+A(x='no', y='defaults', z='here')
+
+...or both args and kwargs
+>>> ctor_jdict = Ctor.to_ctor_dict(namedtuple, ('A', 'x y z'), {'defaults': ('has', 'defaults')})
+>>> pprint(ctor_jdict, sort_dicts=False)
+{'CONSTRUCTOR': {'module': 'collections', 'name': 'namedtuple', 'attr': None},
+ 'ARGS': ('A', 'x y z'),
+ 'KWARGS': {'defaults': ('has', 'defaults')}}
+>>> A = Ctor.construct(ctor_jdict)
+>>> A('this one')
+A(x='this one', y='has', z='defaults')
 
 """
 import functools
 import importlib
 import inspect
 import json
-from typing import Callable
+from typing import Callable, TypedDict, Union, Any, List, Dict
 
 import dill
 import numpy as np
 from boltons.iterutils import remap, default_enter
 from glom import Literal, glom, Spec
+from i2 import mk_sentinel
+
+NOT_SET = mk_sentinel('NOT_SET')
 
 
 def mk_serializer_and_deserializer(spec, mk_inv_spec=None):
@@ -168,6 +284,22 @@ class CtorNames:
     CTOR_DICT = 'ctor_dict'
     JSON_DICT = 'jdict'
     CONSTRUCTED = 'constructed'
+
+
+class ConstructorJdict(TypedDict):
+    module: str
+    name: str
+    attr: str
+
+
+CtorDict = TypedDict(
+    'CtorDict',
+    {
+        CtorNames.CONSTRUCTOR: Union[Callable, ConstructorJdict],
+        CtorNames.ARGS: List[Any],
+        CtorNames.KWARGS: Dict[str, Any],
+    },
+)
 
 
 class Ctor(CtorNames):
@@ -340,8 +472,8 @@ class Ctor(CtorNames):
 
     @classmethod
     def serializer(cls, ctor_pydict):
-        """
-        Search ctor_pydict and replace any Ctor.CONSTRUCTOR nodes with a JSON equivalent
+        """Search ctor_pydict and replace any Ctor.CONSTRUCTOR nodes with a JSON equivalent
+
         :param ctor_pydict: A ctor_dict or Dict containing nested ctor_dicts
         :return: jsonizeable ctor_jdict
         """
@@ -353,8 +485,7 @@ class Ctor(CtorNames):
 
     @classmethod
     def deserializer(cls, ctor_jdict):
-        """
-        Search ctor_jdict and replace any Ctor.CONSTRUCTOR nodes with a module object callable
+        """Search ctor_jdict and replace any Ctor.CONSTRUCTOR nodes with a module object callable
 
         :param ctor_jdict: A jsonized ctor_dict or Dict containing nested jsonized ctor_dicts
         :return:
@@ -366,7 +497,7 @@ class Ctor(CtorNames):
         )
 
     @classmethod
-    def to_jdict(cls, ctor_dict):
+    def to_jdict(cls, ctor_dict: CtorDict):
         return cls.serializer(ctor_dict)
 
     @classmethod
@@ -375,12 +506,26 @@ class Ctor(CtorNames):
         return cls._construct_obj(ctor_dict)
 
     @classmethod
-    def to_ctor_dict(cls, constructor: Callable, args: list, kwargs: dict):
-        return {
+    def to_ctor_dict(
+        cls,
+        constructor: Callable,
+        args: Union[list, tuple] = NOT_SET,
+        kwargs: dict = NOT_SET,
+        *,
+        output_type=CtorNames.JSON_DICT,
+    ):
+        if args is NOT_SET:
+            args = []
+        if kwargs is NOT_SET:
+            kwargs = {}
+        ctor_dict = {
             cls.CONSTRUCTOR: constructor,
-            cls.KWARGS: kwargs,
             cls.ARGS: args,
+            cls.KWARGS: kwargs,
         }
+        if output_type == CtorNames.JSON_DICT:
+            return cls.to_jdict(ctor_dict)
+        return ctor_dict
 
     # Boolean ..........................................................................................................
     @classmethod
@@ -416,7 +561,7 @@ class Ctor(CtorNames):
 
     # Private ..........................................................................................................
     @classmethod
-    def _construct_obj(cls, ctor_dict):
+    def _construct_obj(cls, ctor_dict: CtorDict):
         """
         Calls the Ctor.CONSTRUCTOR with given Ctor.ARGS and Ctor.KWARGS.
         Checks if ARGS or KWARGS are ctor_dicts and constructs those first
@@ -437,7 +582,7 @@ class Ctor(CtorNames):
             )
 
     @classmethod
-    def _deconstruct_obj(cls, obj, validate_conversion: bool = False):
+    def _deconstruct_obj(cls, obj, validate_conversion: bool = False) -> CtorDict:
         """Breakdown an obj into a ctor_dict as described by deconstruction_specs.
         Further breakdowns on deconstructed ARGS and KWARGS if necessary.
 
