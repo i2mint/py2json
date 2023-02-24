@@ -389,6 +389,15 @@ class Ctor(CtorNames):
     def construct(cls, obj):
         """Construct ctor objs. Return obj with no action if obj is str, int, float, bool, or None.
 
+        >>> from pprint import pprint
+        >>> from py2json.tests.test_ctor import add
+        >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
+        >>> pprint(serialized, sort_dicts=False)
+        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+         'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
+         'KWARGS': None}
+        >>> assert Ctor.construct(serialized) == add
+
         :param obj: ctor_dict or jdict
         :return: remap obj with constructed ctor_dicts
         """
@@ -426,6 +435,14 @@ class Ctor(CtorNames):
     ):
         """
         Remap a nested structure by deconstructing nodes of non-basic types into ctor_dicts using the deconstruction_specs
+
+        >>> from pprint import pprint
+        >>> from py2json.tests.test_ctor import add
+        >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
+        >>> pprint(serialized, sort_dicts=False)
+        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+         'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
+         'KWARGS': None}
 
         :param obj: any object containing only basic types and those described in the deconstruction_specs
         :param validate_conversion: [boolean] True to compare obj to reconstructed ctor_dict. False to skip validation
@@ -513,7 +530,26 @@ class Ctor(CtorNames):
         kwargs: dict = NOT_SET,
         *,
         output_type=CtorNames.JSON_DICT,
-    ):
+    ) -> CtorDict:
+        """Function calls can also be serialized
+
+        >>> from pprint import pprint
+        >>> from collections import namedtuple
+        >>> ctor_jdict = Ctor.to_ctor_dict(namedtuple, ('A', 'x y z'), {'defaults': ('has', 'defaults')})
+        >>> pprint(ctor_jdict, sort_dicts=False)
+        {'CONSTRUCTOR': {'module': 'collections', 'name': 'namedtuple', 'attr': None},
+         'ARGS': ('A', 'x y z'),
+         'KWARGS': {'defaults': ('has', 'defaults')}}
+        >>> A = Ctor.construct(ctor_jdict)
+        >>> A('this one')
+        A(x='this one', y='has', z='defaults')
+
+        :param constructor: callable
+        :param args: args passed to callable
+        :param kwargs: kwargs passed to callable
+        :param output_type: JSON_DICT or CTOR_DICT
+        :return: CtorDict ready to be constructed with Ctor.construct()
+        """
         if args is NOT_SET:
             args = []
         if kwargs is NOT_SET:
