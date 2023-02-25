@@ -100,6 +100,23 @@ In this example, the object deconstructs with ARGS that also contain to_jdict/fr
                       'KWARGS': None}]}],
  'KWARGS': None}
 
+In this example, the partial function deconstructs with ARGS that also contain a function
+
+>>> from functools import partial
+>>> partial_func = partial(add, 1, b=2)
+>>> serialized = Ctor.deconstruct(partial_func, validate_conversion=True, output_type=Ctor.CTOR_DICT)
+>>> pprint(serialized, sort_dicts=False)
+{'CONSTRUCTOR': <class 'functools.partial'>,
+ 'ARGS': [{'CONSTRUCTOR': {'module': 'ctor',
+                           'name': 'Ctor',
+                           'attr': '_deserialize_ctor_from_jdict'},
+           'ARGS': [{'module': 'py2json.tests.test_ctor',
+                     'name': 'add',
+                     'attr': None}],
+           'KWARGS': None},
+          1],
+ 'KWARGS': {'b': 2}}
+
 
 Function calls can also be serialized
 
@@ -340,6 +357,22 @@ class Ctor(CtorNames):
                                                    validate_conversion='optional callable comparing obj to ctor_dict')
         """
         return [
+            {
+                'description': 'For functools.partial',
+                'check_type': lambda x: isinstance(x, functools.partial),
+                'spec': {
+                    Ctor.CONSTRUCTOR: Literal(functools.partial),
+                    Ctor.ARGS: lambda x: [x.func, *x.args],
+                    Ctor.KWARGS: lambda x: dict(x.keywords),
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    (deserialized_x := Ctor._construct_obj(serialized_x))
+                    and all(
+                        getattr(x, a, NOT_SET) == getattr(deserialized_x, a, NOT_SET)
+                        for a in ('func', 'args', 'keywords')
+                    )
+                ),
+            },
             {
                 'description': 'For numpy.ndarray',
                 'check_type': lambda x: isinstance(x, np.ndarray),

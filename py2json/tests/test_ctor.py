@@ -1,4 +1,5 @@
 import json
+from functools import partial
 from pprint import pprint
 
 import numpy as np
@@ -50,6 +51,20 @@ class TestToJdict(TestClass):
     @classmethod
     def from_jdict(cls, jdict):
         return TestToJdict(**jdict)
+
+
+def test_ctor_partial():
+    original = partial(add, 3, b=4)
+    print(f'\noriginal    : {original}')
+    serialized = Ctor.deconstruct(original, validate_conversion=True)
+    assert '_deserialize_ctor_from_jdict' in json.dumps(
+        serialized
+    ), f'not serialized using _deserialize_ctor_from_jdict'
+    deserialized = Ctor.construct(serialized)
+    print(f'deserialized: {deserialized}')
+    assert original() == deserialized()
+    print('serialized:')
+    pprint(serialized)
 
 
 def test_ctor_class():
