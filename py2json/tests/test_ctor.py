@@ -151,6 +151,7 @@ def test_ctor_fallback_dill_pickle_class_instance():
 
 
 def test_ctor_dict():
+    """Test demonstrating a dict containing many types deconstructed and reconstructed"""
     original = dict(
         function=add,
         cls=TestClass,
@@ -164,6 +165,7 @@ def test_ctor_dict():
         list=[1, 2, 3],
         dict=dict(a=1, b=2, c=3),
         numpy_array=np.arange(10),
+        partial_func=partial(add, 1, b=2),
     )
     print('\n\n------original------')
     pprint(original)
