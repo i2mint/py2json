@@ -360,8 +360,9 @@ class Ctor(CtorNames):
         return [
             {
                 'description': 'For dataclasses.dataclass instance',
-                'check_type': lambda x: dataclasses.is_dataclass(x)
-                and not isinstance(x, type),
+                'check_type': lambda x: (
+                    dataclasses.is_dataclass(x) and not isinstance(x, type)
+                ),
                 'spec': {
                     Ctor.CONSTRUCTOR: lambda x: type(x),
                     Ctor.ARGS: Literal(None),
