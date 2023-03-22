@@ -161,6 +161,7 @@ A(x='no', y='defaults', z='here')
 A(x='this one', y='has', z='defaults')
 
 """
+import dataclasses
 import functools
 import importlib
 import inspect
@@ -357,6 +358,29 @@ class Ctor(CtorNames):
                                                    validate_conversion='optional callable comparing obj to ctor_dict')
         """
         return [
+            {
+                'description': 'For dataclasses.dataclass instance',
+                'check_type': lambda x: dataclasses.is_dataclass(x)
+                and not isinstance(x, type),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x),
+                    Ctor.ARGS: Literal(None),
+                    Ctor.KWARGS: lambda x: {
+                        field.name: getattr(x, field.name)
+                        for field in dataclasses.fields(x)
+                    },
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    (deserialized_x := Ctor._construct_obj(serialized_x))
+                    and (x_dict := dataclasses.asdict(x))
+                    and (deserx_dict := dataclasses.asdict(deserialized_x))
+                    and all(  # only validate json compatible types
+                        x_dict[k] == deserx_dict[k]
+                        for k in x_dict
+                        if cls.is_jdict(x_dict[k])
+                    )
+                ),
+            },
             {
                 'description': 'For functools.partial',
                 'check_type': lambda x: isinstance(x, functools.partial),
