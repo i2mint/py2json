@@ -359,6 +359,32 @@ class Ctor(CtorNames):
         """
         return [
             {
+                'description': 'For objects that have from_jdict and to_jdict methods',
+                'check_type': lambda x: hasattr(x, 'from_jdict')
+                and hasattr(x, 'to_jdict'),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x).from_jdict,
+                    Ctor.ARGS: lambda x: [x.to_jdict()],
+                    Ctor.KWARGS: Literal(None),
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
+                ),
+            },
+            {
+                'description': 'For objects that have from_ddp_jdict and to_dpp_jdict methods',
+                'check_type': lambda x: hasattr(x, 'from_dpp_jdict')
+                and hasattr(x, 'to_dpp_jdict'),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x).from_dpp_jdict,
+                    Ctor.ARGS: lambda x: [x.to_dpp_jdict()],
+                    Ctor.KWARGS: Literal(None),
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    x.to_dpp_jdict() == Ctor._construct_obj(serialized_x).to_dpp_jdict()
+                ),
+            },
+            {
                 'description': 'For dataclasses.dataclass instance',
                 'check_type': lambda x: (
                     dataclasses.is_dataclass(x) and not isinstance(x, type)
@@ -408,19 +434,6 @@ class Ctor(CtorNames):
                 },
                 'validate_conversion': lambda x, serialized_x: (
                     np.allclose(x, Ctor._construct_obj(serialized_x))
-                ),
-            },
-            {
-                'description': 'For objects that have from_jdict and to_jdict methods',
-                'check_type': lambda x: hasattr(x, 'from_jdict')
-                and hasattr(x, 'to_jdict'),
-                'spec': {
-                    Ctor.CONSTRUCTOR: lambda x: type(x).from_jdict,
-                    Ctor.ARGS: lambda x: [x.to_jdict()],
-                    Ctor.KWARGS: Literal(None),
-                },
-                'validate_conversion': lambda x, serialized_x: (
-                    x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
                 ),
             },
             {
