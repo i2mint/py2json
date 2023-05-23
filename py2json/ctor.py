@@ -43,7 +43,7 @@ and the ARGS as the import path of the deconstructed function.
 >>> from py2json.tests.test_ctor import add
 >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
 >>> pprint(serialized, sort_dicts=False)
-{'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+{'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'py2json.ctor.Ctor'>>,
  'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
  'KWARGS': None}
 
@@ -51,7 +51,7 @@ By default, the output type is a json dict. The CONSTRUCTOR method is reduced to
 
 >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.JSON_DICT)
 >>> pprint(serialized, sort_dicts=False)
-{'CONSTRUCTOR': {'module': 'ctor',
+{'CONSTRUCTOR': {'module': 'py2json.ctor',
                  'name': 'Ctor',
                  'attr': '_deserialize_ctor_from_jdict'},
  'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
@@ -59,12 +59,12 @@ By default, the output type is a json dict. The CONSTRUCTOR method is reduced to
 
 Ideally, a custom class will include `to_jdict` and `from_jdict` methods
 
->>> from py2json.tests.test_ctor import TestToJdict
->>> instance = TestToJdict('test_value')
+>>> from py2json.tests.test_ctor import MockToJdict
+>>> instance = MockToJdict('test_value')
 >>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
 >>> pprint(serialized, sort_dicts=False)
 {'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
-                 'name': 'TestToJdict',
+                 'name': 'MockToJdict',
                  'attr': 'from_jdict'},
  'ARGS': [{'value': 'test_value'}],
  'KWARGS': None}
@@ -72,13 +72,13 @@ Ideally, a custom class will include `to_jdict` and `from_jdict` methods
 As a fallback, dill is used when no matching deconstruction_specs is found.
 `CtorException` is thrown if it fails.
 
->>> from py2json.tests.test_ctor import TestClass
->>> instance = TestClass('test_value')
+>>> from py2json.tests.test_ctor import MockClass
+>>> instance = MockClass('test_value')
 >>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
 >>> pprint(serialized, sort_dicts=False) # doctest: +SKIP
 {'CONSTRUCTOR': {'module': 'ctor', 'name': 'dill_load_string', 'attr': None},
  'ARGS': ['\x80\x04\x95E\x00\x00\x00\x00\x00\x00\x00\x8c\x17py2json.tests.test_ctor\x94\x8c\t'
-          'TestClass\x94\x93\x94)\x81\x94}\x94\x8c\x05value\x94\x8c\n'
+          'MockClass\x94\x93\x94)\x81\x94}\x94\x8c\x05value\x94\x8c\n'
           'test_value\x94sb.'],
  'KWARGS': None}
 
@@ -86,15 +86,15 @@ As a fallback, dill is used when no matching deconstruction_specs is found.
 Ctor.deconstruct will also check if the deconstructed args need to be deconstructed as well.
 In this example, the object deconstructs with ARGS that also contain to_jdict/from_jdict
 
->>> from py2json.tests.test_ctor import TestToJdict
->>> instance = TestToJdict([TestToJdict('test_value')])
+>>> from py2json.tests.test_ctor import MockToJdict
+>>> instance = MockToJdict([MockToJdict('test_value')])
 >>> serialized = Ctor.deconstruct(instance, validate_conversion=True)
 >>> pprint(serialized, sort_dicts=False)
 {'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
-                 'name': 'TestToJdict',
+                 'name': 'MockToJdict',
                  'attr': 'from_jdict'},
  'ARGS': [{'value': [{'CONSTRUCTOR': {'module': 'py2json.tests.test_ctor',
-                                      'name': 'TestToJdict',
+                                      'name': 'MockToJdict',
                                       'attr': 'from_jdict'},
                       'ARGS': [{'value': 'test_value'}],
                       'KWARGS': None}]}],
@@ -107,7 +107,7 @@ In this example, the partial function deconstructs with ARGS that also contain a
 >>> serialized = Ctor.deconstruct(partial_func, validate_conversion=True, output_type=Ctor.CTOR_DICT)
 >>> pprint(serialized, sort_dicts=False)
 {'CONSTRUCTOR': <class 'functools.partial'>,
- 'ARGS': [{'CONSTRUCTOR': {'module': 'ctor',
+ 'ARGS': [{'CONSTRUCTOR': {'module': 'py2json.ctor',
                            'name': 'Ctor',
                            'attr': '_deserialize_ctor_from_jdict'},
            'ARGS': [{'module': 'py2json.tests.test_ctor',
@@ -466,7 +466,7 @@ class Ctor(CtorNames):
         >>> from py2json.tests.test_ctor import add
         >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
         >>> pprint(serialized, sort_dicts=False)
-        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'py2json.ctor.Ctor'>>,
          'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
          'KWARGS': None}
         >>> assert Ctor.construct(serialized) == add
@@ -513,7 +513,7 @@ class Ctor(CtorNames):
         >>> from py2json.tests.test_ctor import add
         >>> serialized = Ctor.deconstruct(add, validate_conversion=True, output_type=Ctor.CTOR_DICT)
         >>> pprint(serialized, sort_dicts=False)
-        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'ctor.Ctor'>>,
+        {'CONSTRUCTOR': <bound method Ctor._deserialize_ctor_from_jdict of <class 'py2json.ctor.Ctor'>>,
          'ARGS': [{'module': 'py2json.tests.test_ctor', 'name': 'add', 'attr': None}],
          'KWARGS': None}
 

@@ -14,23 +14,23 @@ def add(a, b):
     return a + b
 
 
-class TestClass:
+class MockClass:
     def __init__(self, value):
         self.value = value
 
-    def __add__(self, other: 'TestClass'):
-        return TestToJdict(self.value + other.value)
+    def __add__(self, other: 'MockClass'):
+        return MockToJdict(self.value + other.value)
 
     def __repr__(self):
         value = self.value
         return f'<{self.__class__.__name__} {value=}>'
 
-    def __eq__(self, other: 'TestClass'):
+    def __eq__(self, other: 'MockClass'):
         return self.value == other.value
 
 
-class TestToJdict(TestClass):
-    def __eq__(self, other: 'TestToJdict'):
+class MockToJdict(MockClass):
+    def __eq__(self, other: 'MockToJdict'):
         return self.to_jdict() == other.to_jdict()
 
     def to_jdict(self):
@@ -41,8 +41,8 @@ class TestToJdict(TestClass):
         return cls(**jdict)
 
 
-class TestToDppJdict(TestClass):
-    def __eq__(self, other: 'TestToDppJdict'):
+class MockToDppJdict(MockClass):
+    def __eq__(self, other: 'MockToDppJdict'):
         return self.to_dpp_jdict() == other.to_dpp_jdict()
 
     def to_dpp_jdict(self):
@@ -54,7 +54,7 @@ class TestToDppJdict(TestClass):
 
 
 @dataclass
-class TestDataclass:
+class MockDataclass:
     a: int = 1
     b: Any = 2
 
@@ -83,7 +83,7 @@ def dataclass_with_partial_add_is_equal(a, b):
             '"_deserialize_ctor_from_jdict"',
             partial_add_is_equal,
         ),
-        ('class type', TestClass, '"_deserialize_ctor_from_jdict"', basic_is_equal),
+        ('class type', MockClass, '"_deserialize_ctor_from_jdict"', basic_is_equal),
         (
             'function',
             add,
@@ -92,13 +92,13 @@ def dataclass_with_partial_add_is_equal(a, b):
         ),
         (
             'class method',
-            TestToJdict.from_jdict,
+            MockToJdict.from_jdict,
             '"_deserialize_ctor_from_jdict"',
             basic_is_equal,
         ),
         (
             'to_jdict and from_jdict',
-            TestToJdict([TestToJdict(1)]),
+            MockToJdict([MockToJdict(1)]),
             '"from_jdict"',
             basic_is_equal,
         ),
@@ -108,16 +108,16 @@ def dataclass_with_partial_add_is_equal(a, b):
             '{"module": "numpy", "name": "array", "attr": null}',
             np.allclose,
         ),
-        ('basic dataclass', TestDataclass(3, 4), '"TestDataclass"', basic_is_equal),
+        ('basic dataclass', MockDataclass(3, 4), '"MockDataclass"', basic_is_equal),
         (
             'dataclass with partial',
-            TestDataclass(5, partial(add, 3, b=4)),
-            '"TestDataclass"',
+            MockDataclass(5, partial(add, 3, b=4)),
+            '"MockDataclass"',
             dataclass_with_partial_add_is_equal,
         ),
         (
             'fallback dill',
-            TestClass([TestClass(1)]),
+            MockClass([MockClass(1)]),
             '"dill_load_string"',
             basic_is_equal,
         ),
@@ -142,13 +142,13 @@ def test_ctor_dict():
     """Test demonstrating a dict containing many types deconstructed and reconstructed"""
     original = dict(
         function=add,
-        cls=TestClass,
-        cls_with_to_jdict=TestToJdict,
-        classmethod=TestToJdict.from_jdict,
-        to_jdict=TestToJdict([TestToJdict(1)]),
-        to_dpp_jdict=TestToDppJdict([TestToDppJdict(1)]),
-        to_dpp_jdict_nested_with_to_jdict=TestToDppJdict([TestToJdict(1)]),
-        class_instance=TestClass([TestClass(1)]),
+        cls=MockClass,
+        cls_with_to_jdict=MockToJdict,
+        classmethod=MockToJdict.from_jdict,
+        to_jdict=MockToJdict([MockToJdict(1)]),
+        to_dpp_jdict=MockToDppJdict([MockToDppJdict(1)]),
+        to_dpp_jdict_nested_with_to_jdict=MockToDppJdict([MockToJdict(1)]),
+        class_instance=MockClass([MockClass(1)]),
         integer=123,
         string='abc',
         boolean=True,
@@ -157,8 +157,8 @@ def test_ctor_dict():
         dict=dict(a=1, b=2, c=3),
         numpy_array=np.arange(10),
         partial_func=partial(add, 1, b=2),
-        basic_dataclass=TestDataclass(3, 4),
-        dataclass_with_partial=TestDataclass(5, partial(add, 3, b=4)),
+        basic_dataclass=MockDataclass(3, 4),
+        dataclass_with_partial=MockDataclass(5, partial(add, 3, b=4)),
     )
     print('\n\n------original------')
     pprint(original)

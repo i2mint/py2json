@@ -37,7 +37,7 @@ jobs:
         run: pylint ./$PROJECT_NAME --ignore=tests,examples,inspire --disable=all --enable=C0114
 
       - name: Test
-        run: pytest --doctest-modules -v -s $PROJECT_NAME
+        run: pytest --doctest-modules --ignore=py2json/inspire -v -s $PROJECT_NAME
 
   publish:
     name: Publish
