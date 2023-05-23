@@ -38,7 +38,19 @@ class TestToJdict(TestClass):
 
     @classmethod
     def from_jdict(cls, jdict):
-        return TestToJdict(**jdict)
+        return cls(**jdict)
+
+
+class TestToDppJdict(TestClass):
+    def __eq__(self, other: 'TestToDppJdict'):
+        return self.to_dpp_jdict() == other.to_dpp_jdict()
+
+    def to_dpp_jdict(self):
+        return {'value': self.value}
+
+    @classmethod
+    def from_dpp_jdict(cls, jdict):
+        return cls(**jdict)
 
 
 @dataclass
@@ -131,8 +143,11 @@ def test_ctor_dict():
     original = dict(
         function=add,
         cls=TestClass,
+        cls_with_to_jdict=TestToJdict,
         classmethod=TestToJdict.from_jdict,
         to_jdict=TestToJdict([TestToJdict(1)]),
+        to_dpp_jdict=TestToDppJdict([TestToDppJdict(1)]),
+        to_dpp_jdict_nested_with_to_jdict=TestToDppJdict([TestToJdict(1)]),
         class_instance=TestClass([TestClass(1)]),
         integer=123,
         string='abc',

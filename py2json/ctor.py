@@ -359,56 +359,6 @@ class Ctor(CtorNames):
         """
         return [
             {
-                'description': 'For objects that have from_jdict and to_jdict methods',
-                'check_type': lambda x: hasattr(x, 'from_jdict')
-                and hasattr(x, 'to_jdict'),
-                'spec': {
-                    Ctor.CONSTRUCTOR: lambda x: type(x).from_jdict,
-                    Ctor.ARGS: lambda x: [x.to_jdict()],
-                    Ctor.KWARGS: Literal(None),
-                },
-                'validate_conversion': lambda x, serialized_x: (
-                    x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
-                ),
-            },
-            {
-                'description': 'For objects that have from_ddp_jdict and to_dpp_jdict methods',
-                'check_type': lambda x: hasattr(x, 'from_dpp_jdict')
-                and hasattr(x, 'to_dpp_jdict'),
-                'spec': {
-                    Ctor.CONSTRUCTOR: lambda x: type(x).from_dpp_jdict,
-                    Ctor.ARGS: lambda x: [x.to_dpp_jdict()],
-                    Ctor.KWARGS: Literal(None),
-                },
-                'validate_conversion': lambda x, serialized_x: (
-                    x.to_dpp_jdict() == Ctor._construct_obj(serialized_x).to_dpp_jdict()
-                ),
-            },
-            {
-                'description': 'For dataclasses.dataclass instance',
-                'check_type': lambda x: (
-                    dataclasses.is_dataclass(x) and not isinstance(x, type)
-                ),
-                'spec': {
-                    Ctor.CONSTRUCTOR: lambda x: type(x),
-                    Ctor.ARGS: Literal(None),
-                    Ctor.KWARGS: lambda x: {
-                        field.name: getattr(x, field.name)
-                        for field in dataclasses.fields(x)
-                    },
-                },
-                'validate_conversion': lambda x, serialized_x: (
-                    (deserialized_x := Ctor._construct_obj(serialized_x))
-                    and (x_dict := dataclasses.asdict(x))
-                    and (deserx_dict := dataclasses.asdict(deserialized_x))
-                    and all(  # only validate json compatible types
-                        x_dict[k] == deserx_dict[k]
-                        for k in x_dict
-                        if cls.is_jdict(x_dict[k])
-                    )
-                ),
-            },
-            {
                 'description': 'For functools.partial',
                 'check_type': lambda x: isinstance(x, functools.partial),
                 'spec': {
@@ -453,6 +403,58 @@ class Ctor(CtorNames):
                     Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
                     Ctor.KWARGS: Literal(None),
                 },
+            },
+            {
+                'description': 'For instances that have from_jdict and to_jdict methods',
+                'check_type': lambda x: not isinstance(x, type)
+                and hasattr(x, 'from_jdict')
+                and hasattr(x, 'to_jdict'),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x).from_jdict,
+                    Ctor.ARGS: lambda x: [x.to_jdict()],
+                    Ctor.KWARGS: Literal(None),
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
+                ),
+            },
+            {
+                'description': 'For instances that have from_ddp_jdict and to_dpp_jdict methods',
+                'check_type': lambda x: not isinstance(x, type)
+                and hasattr(x, 'from_dpp_jdict')
+                and hasattr(x, 'to_dpp_jdict'),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x).from_dpp_jdict,
+                    Ctor.ARGS: lambda x: [x.to_dpp_jdict()],
+                    Ctor.KWARGS: Literal(None),
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    x.to_dpp_jdict() == Ctor._construct_obj(serialized_x).to_dpp_jdict()
+                ),
+            },
+            {
+                'description': 'For dataclasses.dataclass instance',
+                'check_type': lambda x: (
+                    dataclasses.is_dataclass(x) and not isinstance(x, type)
+                ),
+                'spec': {
+                    Ctor.CONSTRUCTOR: lambda x: type(x),
+                    Ctor.ARGS: Literal(None),
+                    Ctor.KWARGS: lambda x: {
+                        field.name: getattr(x, field.name)
+                        for field in dataclasses.fields(x)
+                    },
+                },
+                'validate_conversion': lambda x, serialized_x: (
+                    (deserialized_x := Ctor._construct_obj(serialized_x))
+                    and (x_dict := dataclasses.asdict(x))
+                    and (deserx_dict := dataclasses.asdict(deserialized_x))
+                    and all(  # only validate json compatible types
+                        x_dict[k] == deserx_dict[k]
+                        for k in x_dict
+                        if cls.is_jdict(x_dict[k])
+                    )
+                ),
             },
         ]
 
