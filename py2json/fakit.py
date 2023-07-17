@@ -45,7 +45,7 @@ def dotpath_to_obj(dotpath: str):
     module_name = next(path_parts)
     obj = importlib.import_module(module_name)  # assume it's a module
     for item in path_parts:
-        new_module_name = module_name + "." + item
+        new_module_name = module_name + '.' + item
         try:
             obj = importlib.import_module(new_module_name)
             module_name = new_module_name
