@@ -9,6 +9,7 @@ Note: "fakit" can be pronounced with the "a" as in "bake" or a
 """
 import os
 import importlib
+from typing import Union, Tuple
 from functools import partial
 from collections.abc import Mapping
 
@@ -40,10 +41,21 @@ def assert_callable(f: callable) -> callable:
 
 def dotpath_to_obj(dotpath: str):
     """Loads and returns the object referenced by the string DOTPATH_TO_MODULE.OBJ_NAME"""
-    first, *remaining = dotpath.split('.')
-    obj = importlib.import_module(first)  # assume it's a module
-    for item in remaining:
-        obj = getattr(obj, item)
+    path_parts = iter(dotpath.split('.'))
+    module_name = next(path_parts)
+    obj = importlib.import_module(module_name)  # assume it's a module
+    for item in path_parts:
+        new_module_name = module_name + "." + item
+        try:
+            obj = importlib.import_module(new_module_name)
+            module_name = new_module_name
+        except ModuleNotFoundError:
+            while item:
+                try:
+                    obj = getattr(obj, item)
+                    item = next(path_parts, None)
+                except AttributeError:
+                    break
     return obj
 
 
@@ -106,7 +118,7 @@ def dflt_func_loader(f) -> callable:
         return compose(*map(dflt_func_loader, f))
 
 
-def _fakit(f: callable, a: (tuple, list), k: dict):
+def _fakit(f: callable, a: Union[tuple, list], k: dict):
     """The function that actually executes the fak command.
     Simply: `f(*(a or ()), **(k or {}))`
 
