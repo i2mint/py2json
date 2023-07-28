@@ -72,7 +72,7 @@ def func_to_parameters_dict(
     return list(gen_parameters())
 
 
-# TODO: Should we specify parameters control via kind, default, annotation, or via 
+# TODO: Should we specify parameters control via kind, default, annotation, or via
 #   a custome `parameters_to_dict` argument? Pros and cons?
 def signature_to_dict(
     func: Callable,
@@ -91,36 +91,36 @@ def signature_to_dict(
         default=default,
         annotation=annotation,
     )
-    d = {'parameters': parameters_dict}
+    d = {"parameters": parameters_dict}
     sig = Sig(func)
     if return_annotation and sig.return_annotation is not Parameter.empty:
         d["return_annotation"] = return_annotation(sig.return_annotation)
     return d
 
 
-# TODO: The "routing" pattern (declarative control flow) applies here again. Could make 
-#  this into a general "extractor" that would be defined by, possibly nested, 
-#  object and object info extractors. 
+# TODO: The "routing" pattern (declarative control flow) applies here again. Could make
+#  this into a general "extractor" that would be defined by, possibly nested,
+#  object and object info extractors.
 def func_info_dict(
-        func, 
-        *,
-        name = name_of_obj,
-        signature = lambda obj: signature_to_dict(Sig(obj)),
-        **func_info_fields
-    ):
+    func,
+    *,
+    name=name_of_obj,
+    signature=lambda obj: signature_to_dict(Sig(obj)),
+    **func_info_fields,
+):
     r"""Returns a dict of information about a function.
     By default, will include `name` and `signature` fields, is extensible to contain
     any number of fields, simply by specifying extra `(field_name, field_func)` pairs.
 
-    Is meant to be used with `functools.partial` to create custom "info dict" 
+    Is meant to be used with `functools.partial` to create custom "info dict"
     extractors.
 
     >>> def func(a, /, b, c=3, *, d: int = 4) -> int:
     ...     '''Docs of the func'''
     ...     return d + c * b ** a
     >>> func_info_dict(func)  # doctest: +NORMALIZE_WHITESPACE
-    {'name': 'func', 
-    'signature': 
+    {'name': 'func',
+    'signature':
         {'parameters': [{'name': 'a'}, {'name': 'b'}, {'name': 'c'}, {'name': 'd'}]}}
 
     >>> from py2json.obj2dict import signature_to_dict
@@ -130,15 +130,15 @@ def func_info_dict(
     >>> info_dict = func_info_dict(
     ...     func, signature=_signature_to_dict, doc=lambda x: x.__doc__
     ... ) == {
-    ...     'name': 'func', 
+    ...     'name': 'func',
     ...     'signature': {
     ...         'parameters': [
-    ...             {'name': 'a', 'kind': 'POSITIONAL_ONLY'}, 
-    ...             {'name': 'b', 'kind': 'POSITIONAL_OR_KEYWORD'}, 
-    ...             {'name': 'c', 'kind': 'POSITIONAL_OR_KEYWORD'}, 
-    ...             {'name': 'd', 'kind': 'KEYWORD_ONLY'}], 
+    ...             {'name': 'a', 'kind': 'POSITIONAL_ONLY'},
+    ...             {'name': 'b', 'kind': 'POSITIONAL_OR_KEYWORD'},
+    ...             {'name': 'c', 'kind': 'POSITIONAL_OR_KEYWORD'},
+    ...             {'name': 'd', 'kind': 'KEYWORD_ONLY'}],
     ...         'return_annotation': "<class 'int'>"
-    ...     }, 
+    ...     },
     ...     'doc': 'Docs of the func'
     ... }
     """
