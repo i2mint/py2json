@@ -88,7 +88,7 @@ def signature_to_dict(
     parameters_dict = func_to_parameters_dict(
         func, kind=kind, default=default, annotation=annotation,
     )
-    d = {"parameters": parameters_dict}
+    d = {'parameters': parameters_dict}
     sig = Sig(func)
     if return_annotation and sig.return_annotation is not Parameter.empty:
         d['return_annotation'] = return_annotation(sig.return_annotation)
