@@ -64,12 +64,12 @@ estimator_cls_val_for_argname = {
 estimator_cls_val_for_argname = UserDict(estimator_cls_val_for_argname)
 estimator_cls_val_for_argname.__doc__ = '''Valid values for default-less arguments of sklearn estimators.
 A dict whose keys are all (but one -- sklearn.decomposition._dict_learning.SparseCoder)
-the default-less arguments of all sklearn estimators and 
+the default-less arguments of all sklearn estimators and
 the values provide a valid default for them.
 
 How did you do it, you ask?
 
-Well, I 
+Well, I
 >>> val_for_argname = {}  # a mapping from argname and val I updated at every "iteration"
 >>> # make a func_to_kwargs from it:
 >>> func_to_kwargs = sse.mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname)
@@ -348,8 +348,3 @@ def get_estimator_classes_that_are_behaviorally_equivalent_wrt_pickle():
     df = estimator_test_df()
     ok_to_test_classes = tuple(df[df['kind'] == 'ok']['cls'].values)
     len(ok_to_test_classes)
-
-
-from py2json.inspire.example_fakit_use import (
-    mk_serializer_and_deserializer_from_instance_and_methods,
-)

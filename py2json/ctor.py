@@ -20,7 +20,6 @@ An example with numpy arrays:
 
 Another example not runnable, since dependent on some third party code
 
-```
 from ... .source.audio import PyAudioSourceReader
 
 c = PyAudioSourceReader

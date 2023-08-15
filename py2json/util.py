@@ -47,7 +47,7 @@ def mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname=None):
     """Returns a function func_to_kwargs that returns kwargs for a given callable func.
     The intent being that these kwargs can be used as valid inputs of func as such:
     ```
-        func(**func_to_kwargs)
+    func(**func_to_kwargs)
     ```
 
     Does so by taking the intersection of those arguments of the func that don't have defaults
@@ -80,7 +80,7 @@ def mk_func_to_kwargs_from_a_val_for_argname_map(val_for_argname=None):
 
 
 def is_valid_kwargs(func, kwargs):
-    """Test if kwargs constitute a valid input for func simply by trying func(**kwargs) out.
+    """Test if kwargs constitute a valid input for func simply by trying `func(**kwargs)` out.
 
     :param func: A callable
     :param kwargs: A dict of keyword arguments
