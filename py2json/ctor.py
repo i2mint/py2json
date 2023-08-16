@@ -346,12 +346,12 @@ class Ctor(CtorNames):
 
     _deconstruction_specs = None
 
-    def __init__(self, deconstruction_specs: List[dict, callable]=None):
+    def __init__(self, deconstruction_specs: List[Union[dict, callable]] = None):
         """Create a new Ctor instance with custom deconstruction specs
 
         :param deconstruction_specs: Can be a list of dicts or callables.
             See numpy_deconstruction_spec for an example of a callable spec that returns a dict spec.
-        :type deconstruction_specs: List[dict, callable], optional
+        :type deconstruction_specs: List[Union[dict, callable]], optional
         """
 
         if deconstruction_specs:
