@@ -11,6 +11,7 @@ Otherwise, it will attempt to pickle any unhandled types.
 
 An example with numpy arrays:
 
+>>> import numpy as np
 >>> a = np.array([range(i * 10, (i + 1) * 10) for i in range(10)])
 >>> a_decon_ctor_dict = Ctor.deconstruct(a, validate_conversion=True, output_type=Ctor.CTOR_DICT)
 >>> a_decon_jdict = Ctor.deconstruct(a, validate_conversion=True, output_type=Ctor.JSON_DICT)
@@ -20,14 +21,13 @@ An example with numpy arrays:
 
 Another example not runnable, since dependent on some third party code
 
-from ... .source.audio import PyAudioSourceReader
-
-c = PyAudioSourceReader
-c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT)
-c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT)
-c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict)
-c_recon_from_jdict = Ctor.construct(c_decon_jdict)
-assert c == c_recon_from_jdict == c_recon_from_ctor_dict
+>>> from audiostream2py import PyAudioSourceReader
+>>> c = PyAudioSourceReader
+>>> c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT)
+>>> c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT)
+>>> c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict)
+>>> c_recon_from_jdict = Ctor.construct(c_decon_jdict)
+>>> assert c == c_recon_from_jdict == c_recon_from_ctor_dict
 
 The Design
 
