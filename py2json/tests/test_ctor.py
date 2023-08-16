@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from py2json import Ctor
+from py2json.ctor import numpy_deconstruction_spec
 
 
 def add(a, b):
@@ -161,6 +162,28 @@ def test_ctor(test_name, original, deserializer_name, is_equal):
     assert is_equal(original, deserialized)
     print('serialized:')
     pprint(serialized)
+
+
+def test_spec_import_error():
+    """Test that a spec that raises an import error is ignored.
+    And that the default specs are still used by Ctor class."""
+
+    def spec_with_nonexistent_import():
+        import nonexistent_module
+
+        return {'a': 1}
+
+    custom_ctor = Ctor(deconstruction_specs=[spec_with_nonexistent_import])
+    assert custom_ctor.deconstruction_specs == []
+
+    custom_ctor2 = Ctor(
+        deconstruction_specs=[spec_with_nonexistent_import, numpy_deconstruction_spec]
+    )
+    assert len(custom_ctor2.deconstruction_specs) == 1
+    assert custom_ctor2.deconstruct(np.arange(10))
+
+    assert len(Ctor.deconstruction_specs) > 1
+    assert len(Ctor().deconstruction_specs) == len(Ctor.deconstruction_specs)
 
 
 def test_ctor_dict():
