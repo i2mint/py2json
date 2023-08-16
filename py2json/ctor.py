@@ -11,6 +11,7 @@ Otherwise, it will attempt to pickle any unhandled types.
 
 An example with numpy arrays:
 
+>>> import numpy as np
 >>> a = np.array([range(i * 10, (i + 1) * 10) for i in range(10)])
 >>> a_decon_ctor_dict = Ctor.deconstruct(a, validate_conversion=True, output_type=Ctor.CTOR_DICT)
 >>> a_decon_jdict = Ctor.deconstruct(a, validate_conversion=True, output_type=Ctor.JSON_DICT)
@@ -20,14 +21,13 @@ An example with numpy arrays:
 
 Another example not runnable, since dependent on some third party code
 
-from ... .source.audio import PyAudioSourceReader
-
-c = PyAudioSourceReader
-c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT)
-c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT)
-c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict)
-c_recon_from_jdict = Ctor.construct(c_decon_jdict)
-assert c == c_recon_from_jdict == c_recon_from_ctor_dict
+>>> from audiostream2py import PyAudioSourceReader # doctest: +SKIP
+>>> c = PyAudioSourceReader # doctest: +SKIP
+>>> c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT) # doctest: +SKIP
+>>> c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT) # doctest: +SKIP
+>>> c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict) # doctest: +SKIP
+>>> c_recon_from_jdict = Ctor.construct(c_decon_jdict) # doctest: +SKIP
+>>> assert c == c_recon_from_jdict == c_recon_from_ctor_dict # doctest: +SKIP
 
 The Design
 
@@ -168,7 +168,6 @@ import json
 from typing import Callable, TypedDict, Union, Any, List, Dict
 
 import dill
-import numpy as np
 from boltons.iterutils import remap, default_enter
 from glom import Literal, glom, Spec
 from i2 import mk_sentinel
@@ -196,6 +195,8 @@ def mk_serializer_and_deserializer(spec, mk_inv_spec=None):
 class classproperty(object):
     """
     Similar to @property decorator except for classes instead of class instances
+    When the class is instantiated, the property is converted to a normal property object.
+
     >>> class Test:
     ...     @classproperty
     ...     def a(cls):
@@ -216,7 +217,9 @@ class classproperty(object):
         self.fget = fget
 
     def __get__(self, owner_self, owner_cls):
-        return self.fget(owner_cls)
+        if owner_self is None:
+            return self.fget(owner_cls)
+        return self.fget(owner_self)
 
 
 def if_condition_return_action(obj, condition_action_list):
@@ -319,10 +322,51 @@ CtorDict = TypedDict(
 )
 
 
+def numpy_deconstruction_spec():
+    import numpy as np
+
+    return {
+        'description': 'For numpy.ndarray',
+        'check_type': lambda x: isinstance(x, np.ndarray),
+        'spec': {
+            Ctor.CONSTRUCTOR: Literal(np.array),
+            Ctor.ARGS: lambda x: [x.tolist()],
+            Ctor.KWARGS: Literal(None),
+        },
+        'validate_conversion': lambda x, serialized_x: (
+            np.allclose(x, Ctor._construct_obj(serialized_x))
+        ),
+    }
+
+
 class Ctor(CtorNames):
     """
     A Base class for serializing any object
     """
+
+    _deconstruction_specs = None
+
+    def __init__(self, deconstruction_specs: List[Union[dict, callable]] = None):
+        """Create a new Ctor instance with custom deconstruction specs
+
+        :param deconstruction_specs: Can be a list of dicts or callables.
+            See numpy_deconstruction_spec for an example of a callable spec that returns a dict spec.
+        :type deconstruction_specs: List[Union[dict, callable]], optional
+        """
+
+        if deconstruction_specs:
+            self._deconstruction_specs = deconstruction_specs
+
+    @classmethod
+    def add_deconstruction_spec(cls, *specs):
+        """Create a new Ctor class with additional deconstruction specs
+
+        :param specs: one or more deconstruction specs
+
+        :return: Ctor instance
+        """
+        _specs = list(specs) + cls.deconstruction_specs
+        return Ctor(deconstruction_specs=_specs)
 
     @classmethod
     def _serialize_ctor_to_jdict(cls, ctor_obj):
@@ -348,8 +392,28 @@ class Ctor(CtorNames):
             ),
         }
 
+    @classmethod
+    def decorator_deconstruction_spec(cls, obj):
+        if not isinstance(obj, type) and hasattr(obj, '_py2json_deconstruction_spec'):
+            return obj._py2json_deconstruction_spec
+
+    @classmethod
+    def resolve_deconstruction_specs(cls, specs):
+        for s in specs:
+            if callable(s):
+                try:
+                    s = s()
+                except ImportError:
+                    continue
+            yield s
+
     @classproperty
     def deconstruction_specs(cls):
+        specs = cls._deconstruction_specs or cls._default_deconstruction_specs
+        return list(cls.resolve_deconstruction_specs(specs))
+
+    @classproperty
+    def _default_deconstruction_specs(cls):
         """
         Return a list of deconstruction_specs=dict(description='doc string',
                                                    check_type='callable for checking if obj satisfies spec',
@@ -373,18 +437,7 @@ class Ctor(CtorNames):
                     )
                 ),
             },
-            {
-                'description': 'For numpy.ndarray',
-                'check_type': lambda x: isinstance(x, np.ndarray),
-                'spec': {
-                    Ctor.CONSTRUCTOR: Literal(np.array),
-                    Ctor.ARGS: lambda x: [x.tolist()],
-                    Ctor.KWARGS: Literal(None),
-                },
-                'validate_conversion': lambda x, serialized_x: (
-                    np.allclose(x, Ctor._construct_obj(serialized_x))
-                ),
-            },
+            numpy_deconstruction_spec(),
             {
                 'description': 'for class methods or class constructors',
                 'check_type': lambda x: inspect.ismethod(x) or inspect.isclass(x),
@@ -690,6 +743,21 @@ class Ctor(CtorNames):
             )
 
     @classmethod
+    def _get_deconstruction_spec(cls, obj):
+        """Searches deconstruction_specs for a matching spec and returns it.
+
+        :param obj: any object
+        :return: deconstruction_spec: Dict
+        """
+        if (
+            isinstance(obj, type)
+            or (spec := cls.decorator_deconstruction_spec(obj)) is None
+        ):
+            spec = next(s for s in cls.deconstruction_specs if s['check_type'](obj))
+
+        return spec
+
+    @classmethod
     def _deconstruct_obj(cls, obj, validate_conversion: bool = False) -> CtorDict:
         """Breakdown an obj into a ctor_dict as described by deconstruction_specs.
         Further breakdowns on deconstructed ARGS and KWARGS if necessary.
@@ -702,7 +770,7 @@ class Ctor(CtorNames):
         :return: ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}
         """
         try:
-            s = next(s for s in cls.deconstruction_specs if s['check_type'](obj))
+            s = cls._get_deconstruction_spec(obj)
             try:
                 serializer = s['serializer']
             except KeyError:
@@ -781,3 +849,48 @@ class Ctor(CtorNames):
     @classmethod
     def _default_conversion_validation(cls, original, ctor_dict):
         return original == Ctor._construct_obj(ctor_dict)
+
+    @classmethod
+    def mk_class_serializable(
+        cls,
+        klass: type = None,
+        *,
+        obj_to_constructor: Callable = None,
+        obj_to_args: Callable[[Any, Any], List[Any]] = None,
+        obj_to_kwargs: Callable[[Any, Any], Dict[str, Any]] = None,
+        validate_conversion: Callable[[Any, CtorDict], bool] = None,
+    ):
+        """Decorator to make a class serializable.
+
+        :param klass: Class to make serializable
+        :param obj_to_constructor: Convert instance obj to constructor, defaults to None
+        :param obj_to_args: Convert instance obj to args for constructor, defaults to None
+        :param obj_to_kwargs: Convert instance obj to kwargs for constructor, defaults to None
+        :param validate_conversion: Validate conversion from obj to ctor_dict, defaults to None
+
+        :return: klass
+
+        """
+
+        def decorator(_class):
+            if not isinstance(_class, type):
+                raise CtorException(f'expected a class, got {type(_class)}: {_class}')
+
+            _class._py2json_deconstruction_spec = {
+                'check_type': lambda obj: isinstance(obj, _class),
+                'spec': {
+                    cls.CONSTRUCTOR: obj_to_constructor or Literal(_class),
+                    cls.ARGS: obj_to_args or Literal(None),
+                    cls.KWARGS: obj_to_kwargs or Literal(None),
+                },
+            }
+            if validate_conversion is not None:
+                _class._py2json_deconstruction_spec[
+                    'validate_conversion'
+                ] = validate_conversion
+
+            return _class
+
+        if klass is None:
+            return decorator
+        return decorator(klass)

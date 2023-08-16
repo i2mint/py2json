@@ -8,6 +8,7 @@ import numpy as np
 import pytest
 
 from py2json import Ctor
+from py2json.ctor import numpy_deconstruction_spec
 
 
 def add(a, b):
@@ -19,7 +20,7 @@ class MockClass:
         self.value = value
 
     def __add__(self, other: 'MockClass'):
-        return MockToJdict(self.value + other.value)
+        return type(self)(self.value + other.value)
 
     def __repr__(self):
         value = self.value
@@ -51,6 +52,19 @@ class MockToDppJdict(MockClass):
     @classmethod
     def from_dpp_jdict(cls, jdict):
         return cls(**jdict)
+
+
+@Ctor.mk_class_serializable(obj_to_kwargs=lambda obj: {'value': obj.value})
+class MockWithDecorator(MockClass):
+    pass
+
+
+@Ctor.mk_class_serializable(
+    obj_to_constructor=lambda x: type(x).from_jdict,
+    obj_to_args=lambda x: [x.to_jdict()],
+)
+class MockToJdictWithDecorator(MockToJdict):
+    pass
 
 
 @dataclass
@@ -121,6 +135,18 @@ def dataclass_with_partial_add_is_equal(a, b):
             '"dill_load_string"',
             basic_is_equal,
         ),
+        (
+            'make serializable decorator',
+            MockWithDecorator(1),
+            '"MockWithDecorator"',
+            basic_is_equal,
+        ),
+        (
+            'make serializable decorator',
+            MockToJdictWithDecorator(1),
+            '"from_jdict"',
+            basic_is_equal,
+        ),
     ],
 )
 def test_ctor(test_name, original, deserializer_name, is_equal):
@@ -136,6 +162,28 @@ def test_ctor(test_name, original, deserializer_name, is_equal):
     assert is_equal(original, deserialized)
     print('serialized:')
     pprint(serialized)
+
+
+def test_spec_import_error():
+    """Test that a spec that raises an import error is ignored.
+    And that the default specs are still used by Ctor class."""
+
+    def spec_with_nonexistent_import():
+        import nonexistent_module
+
+        return {'a': 1}
+
+    custom_ctor = Ctor(deconstruction_specs=[spec_with_nonexistent_import])
+    assert custom_ctor.deconstruction_specs == []
+
+    custom_ctor2 = Ctor(
+        deconstruction_specs=[spec_with_nonexistent_import, numpy_deconstruction_spec]
+    )
+    assert len(custom_ctor2.deconstruction_specs) == 1
+    assert custom_ctor2.deconstruct(np.arange(10))
+
+    assert len(Ctor.deconstruction_specs) > 1
+    assert len(Ctor().deconstruction_specs) == len(Ctor.deconstruction_specs)
 
 
 def test_ctor_dict():
@@ -159,6 +207,8 @@ def test_ctor_dict():
         partial_func=partial(add, 1, b=2),
         basic_dataclass=MockDataclass(3, 4),
         dataclass_with_partial=MockDataclass(5, partial(add, 3, b=4)),
+        cls_with_decorator=MockWithDecorator(1),
+        to_jdict_with_decorator=MockToJdictWithDecorator(1),
     )
     print('\n\n------original------')
     pprint(original)
@@ -168,3 +218,7 @@ def test_ctor_dict():
     deserialized = Ctor.construct(serialized)
     print('\n\n----deserialized----')
     pprint(deserialized)
+
+
+if __name__ == '__main__':
+    test_ctor_dict()
