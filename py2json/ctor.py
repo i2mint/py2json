@@ -348,6 +348,11 @@ class Ctor(CtorNames):
             ),
         }
 
+    @classmethod
+    def decorator_deconstruction_spec(cls, obj):
+        if not isinstance(obj, type) and hasattr(obj, '_py2json_deconstruction_spec'):
+            return obj._py2json_deconstruction_spec
+
     @classproperty
     def deconstruction_specs(cls):
         """
@@ -690,6 +695,20 @@ class Ctor(CtorNames):
             )
 
     @classmethod
+    def _get_deconstruction_spec(cls, obj):
+        """Searches deconstruction_specs for a matching spec and returns it.
+
+        :param obj: any object
+        :return: deconstruction_spec: Dict
+        """
+        if not isinstance(obj, type) and (
+            spec := getattr(obj, '_py2json_deconstruction_spec', None)
+        ):
+            return spec
+
+        return next(s for s in cls.deconstruction_specs if s['check_type'](obj))
+
+    @classmethod
     def _deconstruct_obj(cls, obj, validate_conversion: bool = False) -> CtorDict:
         """Breakdown an obj into a ctor_dict as described by deconstruction_specs.
         Further breakdowns on deconstructed ARGS and KWARGS if necessary.
@@ -702,7 +721,7 @@ class Ctor(CtorNames):
         :return: ctor_dict: {Ctor.CONSTRUCTOR: Callable, Ctor.ARGS: List[Any], Ctor.KWARGS: Dict[str, Any]}
         """
         try:
-            s = next(s for s in cls.deconstruction_specs if s['check_type'](obj))
+            s = cls._get_deconstruction_spec(obj)
             try:
                 serializer = s['serializer']
             except KeyError:
@@ -781,3 +800,48 @@ class Ctor(CtorNames):
     @classmethod
     def _default_conversion_validation(cls, original, ctor_dict):
         return original == Ctor._construct_obj(ctor_dict)
+
+    @classmethod
+    def mk_class_serializable(
+        cls,
+        klass: type = None,
+        *,
+        obj_to_constructor: Callable = None,
+        obj_to_args: Callable[[Any, Any], List[Any]] = None,
+        obj_to_kwargs: Callable[[Any, Any], Dict[str, Any]] = None,
+        validate_conversion: Callable[[Any, CtorDict], bool] = None,
+    ):
+        """Decorator to make a class serializable.
+
+        :param klass: Class to make serializable
+        :param obj_to_constructor: Convert instance obj to constructor, defaults to None
+        :param obj_to_args: Convert instance obj to args for constructor, defaults to None
+        :param obj_to_kwargs: Convert instance obj to kwargs for constructor, defaults to None
+        :param validate_conversion: Validate conversion from obj to ctor_dict, defaults to None
+
+        :return: klass
+
+        """
+
+        def decorator(_class):
+            if not isinstance(_class, type):
+                raise CtorException(f'expected a class, got {type(_class)}: {_class}')
+
+            _class._py2json_deconstruction_spec = {
+                'check_type': lambda obj: isinstance(obj, _class),
+                'spec': {
+                    cls.CONSTRUCTOR: obj_to_constructor or Literal(_class),
+                    cls.ARGS: obj_to_args or Literal(None),
+                    cls.KWARGS: obj_to_kwargs or Literal(None),
+                },
+            }
+            if validate_conversion is not None:
+                _class._py2json_deconstruction_spec[
+                    'validate_conversion'
+                ] = validate_conversion
+
+            return _class
+
+        if klass is None:
+            return decorator
+        return decorator(klass)
