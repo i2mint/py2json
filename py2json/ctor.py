@@ -21,13 +21,13 @@ An example with numpy arrays:
 
 Another example not runnable, since dependent on some third party code
 
->>> from audiostream2py import PyAudioSourceReader
->>> c = PyAudioSourceReader
->>> c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT)
->>> c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT)
->>> c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict)
->>> c_recon_from_jdict = Ctor.construct(c_decon_jdict)
->>> assert c == c_recon_from_jdict == c_recon_from_ctor_dict
+>>> from audiostream2py import PyAudioSourceReader # doctest: +SKIP
+>>> c = PyAudioSourceReader # doctest: +SKIP
+>>> c_decon_ctor_dict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.CTOR_DICT) # doctest: +SKIP
+>>> c_decon_jdict = Ctor.deconstruct(c, validate_conversion=True, output_type=Ctor.JSON_DICT) # doctest: +SKIP
+>>> c_recon_from_ctor_dict = Ctor.construct(c_decon_ctor_dict) # doctest: +SKIP
+>>> c_recon_from_jdict = Ctor.construct(c_decon_jdict) # doctest: +SKIP
+>>> assert c == c_recon_from_jdict == c_recon_from_ctor_dict # doctest: +SKIP
 
 The Design
 
