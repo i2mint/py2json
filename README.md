@@ -1,6 +1,83 @@
+# py2json
+
+A small toolkit to help serialize Python objects and callable references into JSON-friendly representations and reconstruct them. It provides:
+
+- `Ctor` — deconstruct/construct objects via a CONSTRUCTOR/ARGS/KWARGS dict representation.
+- `fakit` — a lightweight mini-language to express function calls (f, a, k) and execute them.
+- dotpath helpers — `obj_to_dotpath` and `dotpath_to_obj` for resolving dotted references.
+- helpers to extract function metadata (`obj2dict.func_info_dict`) and a JSON encoder that
+    understands numpy and bytes.
+
+# Quick examples
+
+`py2json` provides a small `JsonCodec` and `make_json_codec` factory that wire
+`Ctor` and `fakit` into a compact encode/decode interface. Instead of forcing
+you to pick from fixed protocol names, the factory accepts a `path_parser`
+argument which is either a callable `Callable[[str], str]` or a string used as
+the separator between module and object parts (default is '.').
+
+This lets you support styles such as:
+
+- dotted: `package.module.attr` (default, `path_parser='.'`)
+- colon: `package.module:Class.attr` (`path_parser=':'`)
+
+The codec normalizes path strings via the `path_parser` and evaluates `$fak`
+expressions via `refakit` (with an injectable `func_loader` for whitelisting).
+
+Example (colon separator):
+
+```py
+from py2json import make_json_codec
+
+codec = make_json_codec(path_parser=':')
+encoded = codec.encode('collections.namedtuple:MyTuple')
+decoded = codec.decode(encoded)
+```
 Tools for json serialization of python objects
 
-# py2json
+## A peep a bit deeper
+
+The `JsonCodec` instance that `make_json_codec` returns uses `Ctor` and `fakit`. 
+Let's have a quick peep at those.
+
+Create a `namedtuple` using `Ctor` and instantiate it:
+
+```py
+from py2json.ctor import Ctor
+from collections import namedtuple
+
+ctor_jdict = Ctor.to_ctor_dict(namedtuple, args=('A', 'x y z'))
+A = Ctor.construct(ctor_jdict)
+inst = A('one', 'two', 'three')
+```
+
+Use `fakit` to express and run a call given a dotted path:
+
+```py
+from py2json.fakit import fakit
+fakit({'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']})
+```
+
+Resolve dotted references and round-trip:
+
+```py
+from py2json.fakit import obj_to_dotpath, dotpath_to_obj
+from inspect import Signature
+dot = obj_to_dotpath(Signature.replace)
+assert dotpath_to_obj(dot) is Signature.replace
+```
+
+Notes
+-----
+- `Ctor` will serialize callables to a JSON-friendly jdict with keys `{module, name, attr}` and
+    can `construct` them back into callables or instantiated objects.
+- `fakit` accepts either a callable, a dotted string, or a small structure `(f, a, k)` and
+    uses a configurable `func_loader` to resolve `f`. For security, supply a whitelist `func_loader`.
+
+See `misc/py2json_wip.ipynb` for runnable demos.
+
+
+# Why py2json?
 
 Here we tackle the problem of serializing a python object into a json. 
 
@@ -19,7 +96,7 @@ The only value of an object is behavior that will ensue. This may be the behavio
 Our approach to converting a python object to a json will touch on some i2i cornerstones that are more general: Conversion and contextualization. 
 
 
-# Behavior equivalence: What do we need an object to have?
+## Behavior equivalence: What do we need an object to have?
 
 Say we are given the code below.
 
