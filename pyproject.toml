@@ -1,0 +1,187 @@
+[build-system]
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "py2json"
+version = "0.1.28"
+description = "Tools for json serialization of python objects"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = [
+    "json",
+    "serialization",
+    "serialize",
+    "deserialize",
+    "encoder",
+    "codec",
+]
+authors = [
+    { name = "Thor Whalen" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "boltons",
+    "glom",
+    "i2",
+]
+
+[project.urls]
+Homepage = "https://github.com/i2mint/py2json"
+
+[project.optional-dependencies]
+test = [
+    "anytree",
+    "numpy",
+    "scikit-learn",
+    "scipy",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+exclude = [
+    "**/*.ipynb",
+    ".git",
+    ".venv",
+    "build",
+    "dist",
+    "tests",
+    "examples",
+    "scrap",
+    "py2json/inspire",
+]
+
+[tool.ruff.lint]
+select = [
+    "D100",
+]
+ignore = [
+    "D203",
+    "E501",
+    "B905",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/*" = [
+    "D",
+]
+"**/examples/*" = [
+    "D",
+]
+"**/scrap/*" = [
+    "D",
+]
+"**/inspire/*" = [
+    "D",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = [
+    "--ignore=py2json/inspire",
+]
+testpaths = [
+    "py2json",
+]
+doctest_optionflags = [
+    "NORMALIZE_WHITESPACE",
+    "ELLIPSIS",
+]
+
+[tool.wads.ci]
+project_name = "py2json"
+
+[tool.wads.ci.commands]
+pre_test = []
+test = []
+post_test = []
+lint = []
+format = []
+
+[tool.wads.ci.install]
+# The py2json/inspire subpackage is excluded from CI collection, but several
+# top-level modules (encoders.py imports numpy at module level; ctor.py and
+# obj2dict.py have numpy doctests) need the test deps under --doctest-modules.
+# This mirrors the legacy CI's `isee tests-require` step.
+extras = "test"
+
+[tool.wads.ci.env]
+required_envvars = []
+test_envvars = []
+extra_envvars = []
+
+[tool.wads.ci.env.defaults]
+
+[tool.wads.ci.quality.ruff]
+enabled = true
+
+[tool.wads.ci.quality.black]
+enabled = false
+
+[tool.wads.ci.quality.mypy]
+enabled = false
+
+[tool.wads.ci.testing]
+python_versions = [
+    "3.10",
+    "3.12",
+]
+pytest_args = [
+    "-v",
+    "--tb=short",
+    "--ignore=py2json/inspire",
+]
+coverage_enabled = true
+coverage_threshold = 0
+coverage_report_format = [
+    "term",
+    "xml",
+]
+# py2json/inspire is INTENTIONALLY excluded: attribute_tree.py needs anytree
+# and serializing_sklearn_estimators.py needs sklearn. --doctest-modules would
+# otherwise fail collecting them. Mirrors the legacy CI's
+# `pytest --doctest-modules --ignore=py2json/inspire`.
+exclude_paths = [
+    "examples",
+    "scrap",
+    "py2json/inspire",
+]
+test_on_windows = true
+
+[tool.wads.ci.metrics]
+enabled = true
+config_path = ".github/umpyre-config.yml"
+storage_branch = "code-metrics"
+python_version = "3.10"
+force_run = false
+
+[tool.wads.ci.build]
+sdist = true
+wheel = true
+
+[tool.wads.ci.publish]
+enabled = true
+
+[tool.wads.ci.docs]
+enabled = true
+builder = "epythet"
+ignore_paths = [
+    "tests/",
+    "scrap/",
+    "examples/",
+    "py2json/inspire/",
+]
