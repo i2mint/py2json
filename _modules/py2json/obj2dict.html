@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>py2json.obj2dict &mdash; py2json 0.1.28 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=34399df3"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="../../_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            py2json
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json.html">py2json</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/encoders.html">py2json.encoders</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire.html">py2json.inspire</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/tools.html">py2json.tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">py2json</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">py2json.obj2dict</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for py2json.obj2dict</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utils to encode python object information as a dict</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">inspect</span><span class="w"> </span><span class="kn">import</span> <span class="n">Parameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">i2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sig</span><span class="p">,</span> <span class="n">name_of_obj</span>
+
+
+<div class="viewcode-block" id="func_to_parameters_dict">
+<a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.func_to_parameters_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">func_to_parameters_dict</span><span class="p">(</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># tip: Use `str`` to get the name of the kind</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">annotation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a jsonizable dict of a signature&#39;s parameters.</span>
+
+<span class="sd">    By default it will only return names, but you can specify a (egress) function</span>
+<span class="sd">    for any attribute you want to have in your parameter dict (dict giving information</span>
+<span class="sd">    about each parameter in the signature).</span>
+<span class="sd">    For example, if you specify ``kind=str``, the ``kind`` attribute of each parameter</span>
+<span class="sd">    will be included, as a string.</span>
+
+<span class="sd">    Similarly, you can specify that you want the default, as is, by specifying</span>
+<span class="sd">    ``default=lambda x: x``. Note that for ``default`` and ``annotation`` you&#39;ll only</span>
+<span class="sd">    get the field if it existed (i.e. the value was not ``Parameter.empty``).</span>
+<span class="sd">    The reason for specifying ``kind``, ``default``, and ``annotation`` as functions</span>
+<span class="sd">    is that you can specify how you want to represent the value of each of these,</span>
+<span class="sd">    which is needed, for example, to make those values compliant to a targetted system.</span>
+<span class="sd">    For example, you can specify these functions so that the resulting dict is</span>
+<span class="sd">    jsonizable.</span>
+
+
+<span class="sd">    &gt;&gt;&gt; def func(a, /, b, c=3, *, d: int = 4):</span>
+<span class="sd">    ...     pass</span>
+<span class="sd">    &gt;&gt;&gt; func_to_parameters_dict(func)</span>
+<span class="sd">    [{&#39;name&#39;: &#39;a&#39;}, {&#39;name&#39;: &#39;b&#39;}, {&#39;name&#39;: &#39;c&#39;}, {&#39;name&#39;: &#39;d&#39;}]</span>
+<span class="sd">    &gt;&gt;&gt; func_to_parameters_dict(func, kind=str)  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    [{&#39;name&#39;: &#39;a&#39;, &#39;kind&#39;: &#39;POSITIONAL_ONLY&#39;},</span>
+<span class="sd">    {&#39;name&#39;: &#39;b&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;},</span>
+<span class="sd">    {&#39;name&#39;: &#39;c&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;},</span>
+<span class="sd">    {&#39;name&#39;: &#39;d&#39;, &#39;kind&#39;: &#39;KEYWORD_ONLY&#39;}]</span>
+
+<span class="sd">    &gt;&gt;&gt; func_to_parameters_dict(</span>
+<span class="sd">    ...    func, kind=str, default=lambda x: x, annotation=str</span>
+<span class="sd">    ... )  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    [{&#39;name&#39;: &#39;a&#39;, &#39;kind&#39;: &#39;POSITIONAL_ONLY&#39;},</span>
+<span class="sd">    {&#39;name&#39;: &#39;b&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;},</span>
+<span class="sd">    {&#39;name&#39;: &#39;c&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;, &#39;default&#39;: 3},</span>
+<span class="sd">    {&#39;name&#39;: &#39;d&#39;,</span>
+<span class="sd">    &#39;kind&#39;: &#39;KEYWORD_ONLY&#39;,</span>
+<span class="sd">    &#39;default&#39;: 4,</span>
+<span class="sd">    &#39;annotation&#39;: &quot;&lt;class &#39;int&#39;&gt;&quot;}]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parameters</span> <span class="o">=</span> <span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_parameter_dict</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">if</span> <span class="n">kind</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s1">&#39;kind&#39;</span><span class="p">,</span> <span class="n">kind</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">kind</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">default</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">default</span>
+        <span class="k">if</span> <span class="n">annotation</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s1">&#39;annotation&#39;</span><span class="p">,</span> <span class="n">annotation</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">annotation</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">gen_parameters</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_parameter_dict</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+
+    <span class="c1"># return gen_parameters()</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">gen_parameters</span><span class="p">())</span></div>
+
+
+
+<span class="c1"># TODO: Should we specify parameters control via kind, default, annotation, or via</span>
+<span class="c1">#   a custome `parameters_to_dict` argument? Pros and cons?</span>
+<div class="viewcode-block" id="signature_to_dict">
+<a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.signature_to_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">signature_to_dict</span><span class="p">(</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">kind</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>  <span class="c1"># tip: Use `str`` to get the name of the kind</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">annotation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">return_annotation</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a dict version of the signature.</span>
+<span class="sd">    Includes &quot;parameters&quot; and &quot;return_annotation&quot; field (if requested and existing).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parameters_dict</span> <span class="o">=</span> <span class="n">func_to_parameters_dict</span><span class="p">(</span>
+        <span class="n">func</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="n">annotation</span><span class="o">=</span><span class="n">annotation</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;parameters&#39;</span><span class="p">:</span> <span class="n">parameters_dict</span><span class="p">}</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">Sig</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">return_annotation</span> <span class="ow">and</span> <span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;return_annotation&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">return_annotation</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">return_annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+
+<span class="c1"># TODO: The &quot;routing&quot; pattern (declarative control flow) applies here again. Could make</span>
+<span class="c1">#  this into a general &quot;extractor&quot; that would be defined by, possibly nested,</span>
+<span class="c1">#  object and object info extractors.</span>
+<div class="viewcode-block" id="func_info_dict">
+<a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.func_info_dict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">func_info_dict</span><span class="p">(</span>
+    <span class="n">func</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="n">name_of_obj</span><span class="p">,</span>
+    <span class="n">signature</span><span class="o">=</span><span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span> <span class="n">signature_to_dict</span><span class="p">(</span><span class="n">Sig</span><span class="p">(</span><span class="n">obj</span><span class="p">)),</span>
+    <span class="o">**</span><span class="n">func_info_fields</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns a dict of information about a function.</span>
+<span class="sd">    By default, will include `name` and `signature` fields, is extensible to contain</span>
+<span class="sd">    any number of fields, simply by specifying extra `(field_name, field_func)` pairs.</span>
+
+<span class="sd">    Is meant to be used with `functools.partial` to create custom &quot;info dict&quot;</span>
+<span class="sd">    extractors.</span>
+
+<span class="sd">    &gt;&gt;&gt; def func(a, /, b, c=3, *, d: int = 4) -&gt; int:</span>
+<span class="sd">    ...     &#39;&#39;&#39;Docs of the func&#39;&#39;&#39;</span>
+<span class="sd">    ...     return d + c * b ** a</span>
+<span class="sd">    &gt;&gt;&gt; func_info_dict(func)  # doctest: +NORMALIZE_WHITESPACE</span>
+<span class="sd">    {&#39;name&#39;: &#39;func&#39;,</span>
+<span class="sd">    &#39;signature&#39;:</span>
+<span class="sd">        {&#39;parameters&#39;: [{&#39;name&#39;: &#39;a&#39;}, {&#39;name&#39;: &#39;b&#39;}, {&#39;name&#39;: &#39;c&#39;}, {&#39;name&#39;: &#39;d&#39;}]}}</span>
+
+<span class="sd">    &gt;&gt;&gt; from py2json.obj2dict import signature_to_dict</span>
+<span class="sd">    &gt;&gt;&gt; from functools import partial</span>
+<span class="sd">    &gt;&gt;&gt; _signature_to_dict = partial(signature_to_dict, kind=str, return_annotation=str)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; info_dict = func_info_dict(</span>
+<span class="sd">    ...     func, signature=_signature_to_dict, doc=lambda x: x.__doc__</span>
+<span class="sd">    ... ) == {</span>
+<span class="sd">    ...     &#39;name&#39;: &#39;func&#39;,</span>
+<span class="sd">    ...     &#39;signature&#39;: {</span>
+<span class="sd">    ...         &#39;parameters&#39;: [</span>
+<span class="sd">    ...             {&#39;name&#39;: &#39;a&#39;, &#39;kind&#39;: &#39;POSITIONAL_ONLY&#39;},</span>
+<span class="sd">    ...             {&#39;name&#39;: &#39;b&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;},</span>
+<span class="sd">    ...             {&#39;name&#39;: &#39;c&#39;, &#39;kind&#39;: &#39;POSITIONAL_OR_KEYWORD&#39;},</span>
+<span class="sd">    ...             {&#39;name&#39;: &#39;d&#39;, &#39;kind&#39;: &#39;KEYWORD_ONLY&#39;}],</span>
+<span class="sd">    ...         &#39;return_annotation&#39;: &quot;&lt;class &#39;int&#39;&gt;&quot;</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ...     &#39;doc&#39;: &#39;Docs of the func&#39;</span>
+<span class="sd">    ... }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">func_info_fields</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">signature</span><span class="o">=</span><span class="n">signature</span><span class="p">,</span> <span class="o">**</span><span class="n">func_info_fields</span><span class="p">)</span>
+    <span class="n">info_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">field_name</span><span class="p">,</span> <span class="n">field_func</span> <span class="ow">in</span> <span class="n">func_info_fields</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">field_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">info_dict</span><span class="p">[</span><span class="n">field_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">field_func</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">info_dict</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------------------------</span>
+<span class="c1"># Old stuff</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">kind_of_type</span><span class="p">(</span><span class="n">obj_type</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">obj_type</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="n">obj_type</span><span class="o">.</span><span class="vm">__name__</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">kind_of_obj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">kind_of_type</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">no_dunder_filt</span><span class="p">(</span><span class="n">attr</span><span class="p">):</span>
+    <span class="k">return</span> <span class="ow">not</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="items_with_transformed_keys">
+<a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.items_with_transformed_keys">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">items_with_transformed_keys</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">key_trans</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">key_cond</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A generator of (transformed_key, value) items.</span>
+
+<span class="sd">    :param d: dict (or mapping) to operate on</span>
+<span class="sd">    :param key_trans: Function that is applied to the key</span>
+<span class="sd">    :param key_cond: Function specifying whether to change the key or not</span>
+<span class="sd">    :return: A generator of (transformed_key, value)</span>
+
+<span class="sd">    &gt;&gt;&gt; d = {&#39;a&#39;: 1, 2: 20}</span>
+<span class="sd">    &gt;&gt;&gt; dict(items_with_transformed_keys(d, lambda x: x * 100, lambda x: isinstance(x, int)))</span>
+<span class="sd">    {&#39;a&#39;: 1, 200: 20}</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key_cond</span><span class="p">(</span><span class="n">k</span><span class="p">):</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">key_trans</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span></div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ApplyDictOf</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="n">apply_dict_of</span> <span class="o">=</span> <span class="n">ApplyDictOf</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Obj2Dict">
+<a class="viewcode-back" href="../../module_docs/py2json/obj2dict.html#py2json.obj2dict.Obj2Dict">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Obj2Dict</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">    &gt;&gt;&gt; import numpy as np</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; dc = Obj2Dict(</span>
+<span class="sd">    ...     to_data_for_kind={</span>
+<span class="sd">    ...         &#39;numpy.ndarray&#39;: lambda obj: obj.tolist()</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ...     from_data_for_kind={</span>
+<span class="sd">    ...         &#39;numpy.ndarray&#39;: lambda data: np.array(data)</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ... )</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; original_obj = np.array([2,4])</span>
+<span class="sd">    &gt;&gt;&gt; kind, data = dc.kind_and_data_of_obj(original_obj)</span>
+<span class="sd">    &gt;&gt;&gt; assert kind == &#39;numpy.ndarray&#39;</span>
+<span class="sd">    &gt;&gt;&gt; assert type(data) == list</span>
+<span class="sd">    &gt;&gt;&gt; assert data == [2, 4]</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; recovered_obj = dc.obj_of_kind_and_data(kind, data)</span>
+<span class="sd">    &gt;&gt;&gt; assert type(original_obj) == type(recovered_obj)</span>
+<span class="sd">    &gt;&gt;&gt; assert all(original_obj == recovered_obj)</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; # But couldn&#39;t make it work (yet) with:</span>
+<span class="sd">    &gt;&gt;&gt; from collections import Counter</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; class A(object):</span>
+<span class="sd">    ...     z = Counter({&#39;n&#39;: 10, &#39;k&#39;: 5})</span>
+<span class="sd">    ...     def __init__(self, x=(1,2,3), y=np.array([2,3,4]), z=None):</span>
+<span class="sd">    ...         self.x = x</span>
+<span class="sd">    ...         self._y = y</span>
+<span class="sd">    ...         if z is not None:</span>
+<span class="sd">    ...             self.z = z</span>
+<span class="sd">    ...     def __repr__(self):</span>
+<span class="sd">    ...         return f&quot;A(x={self.x}, y={self._y}, z={self.z})&quot;</span>
+<span class="sd">    ...</span>
+<span class="sd">    &gt;&gt;&gt; dc = Obj2Dict(</span>
+<span class="sd">    ...     to_data_for_kind={</span>
+<span class="sd">    ...         &#39;numpy.ndarray&#39;: lambda obj: obj.tolist(),</span>
+<span class="sd">    ...         Counter: dict,</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ...     from_data_for_kind={</span>
+<span class="sd">    ...         &#39;__main__.A&#39;: A,</span>
+<span class="sd">    ...         &#39;numpy.ndarray&#39;: lambda data: np.array(data),</span>
+<span class="sd">    ...         Counter: Counter</span>
+<span class="sd">    ...     },</span>
+<span class="sd">    ... )</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_data_for_kind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">from_data_for_kind</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">to_data_for_kind</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">to_data_for_kind</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">from_data_for_kind</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">from_data_for_kind</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">is_type</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">to_data_for_kind</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">items_with_transformed_keys</span><span class="p">(</span>
+                <span class="n">to_data_for_kind</span><span class="p">,</span> <span class="n">key_trans</span><span class="o">=</span><span class="n">kind_of_type</span><span class="p">,</span> <span class="n">key_cond</span><span class="o">=</span><span class="n">is_type</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">from_data_for_kind</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">items_with_transformed_keys</span><span class="p">(</span>
+                <span class="n">from_data_for_kind</span><span class="p">,</span> <span class="n">key_trans</span><span class="o">=</span><span class="n">kind_of_type</span><span class="p">,</span> <span class="n">key_cond</span><span class="o">=</span><span class="n">is_type</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kind_and_data_of_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">kind_of_obj</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_data_for_kind</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">kind</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_data_for_kind</span><span class="p">[</span><span class="n">kind</span><span class="p">](</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">kind</span><span class="p">,</span> <span class="n">obj</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">obj_of_kind_and_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kind</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;__builtin__&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="s1">&#39;data&#39;</span> <span class="ow">in</span> <span class="n">data</span>
+            <span class="ow">and</span> <span class="s1">&#39;kind&#39;</span> <span class="ow">in</span> <span class="n">data</span>
+            <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_of_kind_and_data</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;kind&#39;</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">kind</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_data_for_kind</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_data_for_kind</span><span class="p">[</span><span class="n">kind</span><span class="p">](</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">obj_of_kind_data_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind_data_dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj_of_kind_and_data</span><span class="p">(</span>
+            <span class="n">kind</span><span class="o">=</span><span class="n">kind_data_dict</span><span class="p">[</span><span class="s1">&#39;kind&#39;</span><span class="p">],</span> <span class="n">data</span><span class="o">=</span><span class="n">kind_data_dict</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">dict_of</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">attr_filt</span><span class="o">=</span><span class="n">no_dunder_filt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">attr_filt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attr_filt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">attr</span><span class="p">:</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="nb">set</span><span class="p">)):</span>
+            <span class="n">attr_inclusion_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">)</span>
+            <span class="n">attr_filt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">attr</span><span class="p">:</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">attr_inclusion_set</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">attr_filt</span> <span class="o">==</span> <span class="s1">&#39;underscore_suffixed&#39;</span><span class="p">:</span>
+                <span class="n">attr_filt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">attr</span><span class="p">:</span> <span class="n">attr</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">attr_pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">)</span>
+                <span class="n">attr_filt</span> <span class="o">=</span> <span class="n">attr_pattern</span><span class="o">.</span><span class="n">match</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">callable</span><span class="p">(</span>
+                <span class="n">attr_filt</span>
+            <span class="p">),</span> <span class="s2">&quot;Don&#39;t know what to do with that kind of attr_filt: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="n">attr_filt</span><span class="p">,</span> <span class="nb">dir</span><span class="p">(</span><span class="n">obj</span><span class="p">)):</span>
+            <span class="n">attr_obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+            <span class="n">kind</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kind_and_data_of_obj</span><span class="p">(</span><span class="n">attr_obj</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">apply_dict_of</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;kind&#39;</span><span class="p">:</span> <span class="n">kind</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">data</span><span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;kind&#39;</span><span class="p">:</span> <span class="n">kind</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dict_of</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">attr_filt</span><span class="p">)}</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;kind&#39;</span><span class="p">:</span> <span class="n">kind_of_obj</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">}</span></div>
+
+
+        <span class="c1"># def obj_of(self, obj_dict):</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p></p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

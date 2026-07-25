@@ -1,24 +1,26 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en" data-content_root="./">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to py2json’s documentation! &mdash; py2json 0.1.27 documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/copybutton.css" type="text/css" />
-      <link rel="stylesheet" href="_static/graphviz.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/language_data.js"></script>
-        <script src="_static/toggleprompt.js"></script>
-        <script src="_static/clipboard.min.js"></script>
-        <script src="_static/copybutton.js"></script>
+  <title>Welcome to py2json’s documentation! &mdash; py2json 0.1.28 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+      <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=34399df3"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+      <script src="_static/toggleprompt.js?v=d7ede5d2"></script>
+      <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="_static/copybutton.js?v=f281be69"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -44,7 +46,7 @@
   </form>
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p><span class="caption-text">Contents:</span></p>
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json.html">py2json</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/ctor.html">py2json.ctor</a></li>
@@ -56,6 +58,7 @@
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/tools.html">py2json.tools</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/util.html">py2json.util</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
 </ul>
@@ -85,34 +88,83 @@
            <div itemprop="articleBody">
              
   <section id="welcome-to-py2json-s-documentation">
-<h1>Welcome to py2json’s documentation!<a class="headerlink" href="#welcome-to-py2json-s-documentation" title="Permalink to this headline">¶</a></h1>
+<h1>Welcome to py2json’s documentation!<a class="headerlink" href="#welcome-to-py2json-s-documentation" title="Link to this heading"></a></h1>
 <div class="toctree-wrapper compound">
-<p><span class="caption-text">Contents:</span></p>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json.html">py2json</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/ctor.html">py2json.ctor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/ctor.html">py2json.ctor</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/ctor.html#py2json.ctor.ConstructorJdict"><code class="docutils literal notranslate"><span class="pre">ConstructorJdict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/ctor.html#py2json.ctor.Ctor"><code class="docutils literal notranslate"><span class="pre">Ctor</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/ctor.html#py2json.ctor.CtorDict"><code class="docutils literal notranslate"><span class="pre">CtorDict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/ctor.html#py2json.ctor.CtorException"><code class="docutils literal notranslate"><span class="pre">CtorException</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/ctor.html#py2json.ctor.classproperty"><code class="docutils literal notranslate"><span class="pre">classproperty</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/encoders.html">py2json.encoders</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/fakit.html">py2json.fakit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/fakit.html">py2json.fakit</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.dflt_func_loader"><code class="docutils literal notranslate"><span class="pre">dflt_func_loader()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.dotpath_to_func"><code class="docutils literal notranslate"><span class="pre">dotpath_to_func()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.dotpath_to_obj"><code class="docutils literal notranslate"><span class="pre">dotpath_to_obj()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.extract_fak"><code class="docutils literal notranslate"><span class="pre">extract_fak()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.fakit"><code class="docutils literal notranslate"><span class="pre">fakit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.getenv"><code class="docutils literal notranslate"><span class="pre">getenv()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.obj_to_dotpath"><code class="docutils literal notranslate"><span class="pre">obj_to_dotpath()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.refakit"><code class="docutils literal notranslate"><span class="pre">refakit()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/fakit.html#py2json.fakit.validate_fak"><code class="docutils literal notranslate"><span class="pre">validate_fak()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire.html">py2json.inspire</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/attribute_tree.html">py2json.inspire.attribute_tree</a></li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/example_fakit_use.html">py2json.inspire.example_fakit_use</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/func_serialization.html">py2json.inspire.func_serialization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/inspire/func_serialization.html#py2json.inspire.func_serialization.func_to_jdict"><code class="docutils literal notranslate"><span class="pre">func_to_jdict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/inspire/func_serialization.html#py2json.inspire.func_serialization.jdict_to_func"><code class="docutils literal notranslate"><span class="pre">jdict_to_func()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/inspire/serializing_sklearn_estimators.html">py2json.inspire.serializing_sklearn_estimators</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/obj2dict.html">py2json.obj2dict</a></li>
-<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/util.html">py2json.util</a></li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/obj2dict.html">py2json.obj2dict</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/obj2dict.html#py2json.obj2dict.Obj2Dict"><code class="docutils literal notranslate"><span class="pre">Obj2Dict</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/obj2dict.html#py2json.obj2dict.func_info_dict"><code class="docutils literal notranslate"><span class="pre">func_info_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/obj2dict.html#py2json.obj2dict.func_to_parameters_dict"><code class="docutils literal notranslate"><span class="pre">func_to_parameters_dict()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/obj2dict.html#py2json.obj2dict.items_with_transformed_keys"><code class="docutils literal notranslate"><span class="pre">items_with_transformed_keys()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/obj2dict.html#py2json.obj2dict.signature_to_dict"><code class="docutils literal notranslate"><span class="pre">signature_to_dict()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/tools.html">py2json.tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/tools.html#py2json.tools.JsonCodec"><code class="docutils literal notranslate"><span class="pre">JsonCodec</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/tools.html#py2json.tools.make_json_codec"><code class="docutils literal notranslate"><span class="pre">make_json_codec()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/util.html">py2json.util</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.LiteralVal"><code class="docutils literal notranslate"><span class="pre">LiteralVal</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.Nones"><code class="docutils literal notranslate"><span class="pre">Nones</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.compose"><code class="docutils literal notranslate"><span class="pre">compose()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.ignore_warnings"><code class="docutils literal notranslate"><span class="pre">ignore_warnings()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.is_types_spec"><code class="docutils literal notranslate"><span class="pre">is_types_spec()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.is_valid_kwargs"><code class="docutils literal notranslate"><span class="pre">is_valid_kwargs()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.missing_args_func"><code class="docutils literal notranslate"><span class="pre">missing_args_func()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.mk_func_to_kwargs_from_a_val_for_argname_map"><code class="docutils literal notranslate"><span class="pre">mk_func_to_kwargs_from_a_val_for_argname_map()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.mk_isinstance_cond"><code class="docutils literal notranslate"><span class="pre">mk_isinstance_cond()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.mk_scan_mapper"><code class="docutils literal notranslate"><span class="pre">mk_scan_mapper()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.partial_positionals"><code class="docutils literal notranslate"><span class="pre">partial_positionals()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.types_map_to_scan_mapper"><code class="docutils literal notranslate"><span class="pre">types_map_to_scan_mapper()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="module_docs/py2json/util.html#py2json.util.types_to_cond"><code class="docutils literal notranslate"><span class="pre">types_to_cond()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="module_docs/py2json/w_glom.html">py2json.w_glom</a></li>
 </ul>
 </div>
 </section>
 <section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Link to this heading"></a></h1>
 <ul class="simple">
 <li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
 <li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
 <li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
 </ul>
-<p>Release: 0.1.27</p>
-<p>Last change: Aug 16, 2023</p>
+<p>Release: 0.1.28</p>
+<p>Last change: Jul 25, 2026</p>
 </section>
 
 
@@ -125,7 +177,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright NO COPYRIGHT.</p>
+    <p></p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

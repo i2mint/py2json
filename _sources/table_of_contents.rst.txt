@@ -12,5 +12,6 @@
    module_docs/py2json/inspire/func_serialization
    module_docs/py2json/inspire/serializing_sklearn_estimators
    module_docs/py2json/obj2dict
+   module_docs/py2json/tools
    module_docs/py2json/util
    module_docs/py2json/w_glom
