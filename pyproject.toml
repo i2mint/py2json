@@ -32,6 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "boltons",
+    "dill",
     "glom",
     "i2",
 ]
