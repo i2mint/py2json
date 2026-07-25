@@ -160,6 +160,7 @@ A(x='no', y='defaults', z='here')
 A(x='this one', y='has', z='defaults')
 
 """
+
 import dataclasses
 import functools
 import importlib
@@ -172,7 +173,7 @@ from boltons.iterutils import remap, default_enter
 from glom import Literal, glom, Spec
 from i2 import mk_sentinel
 
-NOT_SET = mk_sentinel('NOT_SET')
+NOT_SET = mk_sentinel("NOT_SET")
 
 
 def mk_serializer_and_deserializer(spec, mk_inv_spec=None):
@@ -230,47 +231,47 @@ def if_condition_return_action(obj, condition_action_list):
 
 def is_ctor_jdict(obj):
     return isinstance(obj, dict) and set(list(obj)) == {
-        'module',
-        'name',
-        'attr',
+        "module",
+        "name",
+        "attr",
     }
 
 
 ctor_to_jdict_spec = {
-    'description': 'Serialize and deserialize Ctor.CONSTRUCTOR to and from jdict',
-    'spec': {
-        'module': functools.partial(
+    "description": "Serialize and deserialize Ctor.CONSTRUCTOR to and from jdict",
+    "spec": {
+        "module": functools.partial(
             if_condition_return_action,
             condition_action_list=[
-                (is_ctor_jdict, lambda obj: obj['module']),
+                (is_ctor_jdict, lambda obj: obj["module"]),
                 (inspect.ismethod, lambda obj: obj.__self__.__module__),
                 (inspect.isclass, lambda obj: obj.__module__),
                 (callable, lambda obj: obj.__module__),
             ],
         ),
-        'name': functools.partial(
+        "name": functools.partial(
             if_condition_return_action,
             condition_action_list=[
-                (is_ctor_jdict, lambda obj: obj['name']),
+                (is_ctor_jdict, lambda obj: obj["name"]),
                 (inspect.ismethod, lambda obj: obj.__self__.__name__),
                 (inspect.isclass, lambda obj: obj.__name__),
                 (callable, lambda obj: obj.__name__),
             ],
         ),
-        'attr': functools.partial(
+        "attr": functools.partial(
             if_condition_return_action,
             condition_action_list=[
-                (is_ctor_jdict, lambda obj: obj['attr']),
+                (is_ctor_jdict, lambda obj: obj["attr"]),
                 (inspect.ismethod, lambda obj: obj.__name__),
                 (inspect.isclass, lambda obj: None),
                 (callable, lambda obj: None),
             ],
         ),
     },
-    'mk_inv_spec': lambda d: (
-        lambda x: importlib.import_module(d['module']),
-        lambda x: getattr(x, d['name']),
-        lambda x: getattr(x, d['attr']) if d['attr'] else x,
+    "mk_inv_spec": lambda d: (
+        lambda x: importlib.import_module(d["module"]),
+        lambda x: getattr(x, d["name"]),
+        lambda x: getattr(x, d["attr"]) if d["attr"] else x,
     ),
 }
 
@@ -278,16 +279,16 @@ ctor_to_jdict_spec = {
     _serialize_ctor_to_jdict,
     _deserialize_ctor_from_jdict,
 ) = mk_serializer_and_deserializer(
-    ctor_to_jdict_spec['spec'], ctor_to_jdict_spec['mk_inv_spec']
+    ctor_to_jdict_spec["spec"], ctor_to_jdict_spec["mk_inv_spec"]
 )
 
 
 def dill_dump_string(x):
-    return dill.dumps(x).decode('latin-1')
+    return dill.dumps(x).decode("latin-1")
 
 
 def dill_load_string(x):
-    return dill.loads(x.encode('latin-1'))
+    return dill.loads(x.encode("latin-1"))
 
 
 class CtorException(ValueError):
@@ -296,14 +297,14 @@ class CtorException(ValueError):
 
 class CtorNames:
     # ctor_dict keys
-    CONSTRUCTOR = 'CONSTRUCTOR'  # callable
-    ARGS = 'ARGS'  # list
-    KWARGS = 'KWARGS'  # dict
+    CONSTRUCTOR = "CONSTRUCTOR"  # callable
+    ARGS = "ARGS"  # list
+    KWARGS = "KWARGS"  # dict
 
     # output types
-    CTOR_DICT = 'ctor_dict'
-    JSON_DICT = 'jdict'
-    CONSTRUCTED = 'constructed'
+    CTOR_DICT = "ctor_dict"
+    JSON_DICT = "jdict"
+    CONSTRUCTED = "constructed"
 
 
 class ConstructorJdict(TypedDict):
@@ -313,7 +314,7 @@ class ConstructorJdict(TypedDict):
 
 
 CtorDict = TypedDict(
-    'CtorDict',
+    "CtorDict",
     {
         CtorNames.CONSTRUCTOR: Union[Callable, ConstructorJdict],
         CtorNames.ARGS: List[Any],
@@ -326,15 +327,15 @@ def numpy_deconstruction_spec():
     import numpy as np
 
     return {
-        'description': 'For numpy.ndarray',
-        'check_type': lambda x: isinstance(x, np.ndarray),
-        'spec': {
+        "description": "For numpy.ndarray",
+        "check_type": lambda x: isinstance(x, np.ndarray),
+        "spec": {
             Ctor.CONSTRUCTOR: Literal(np.array),
             Ctor.ARGS: lambda x: [x.tolist()],
             Ctor.KWARGS: Literal(None),
         },
-        'validate_conversion': lambda x, serialized_x: (
-            np.allclose(x, Ctor._construct_obj(serialized_x))
+        "validate_conversion": lambda x, serialized_x: np.allclose(
+            x, Ctor._construct_obj(serialized_x)
         ),
     }
 
@@ -380,21 +381,21 @@ class Ctor(CtorNames):
     def fallback_deconstruction_spec(cls):
         """Try to pickle when no deconstruction spec is found"""
         return {
-            'description': 'default to dill pickle',
-            'check_type': lambda x: True,
-            'spec': {
+            "description": "default to dill pickle",
+            "check_type": lambda x: True,
+            "spec": {
                 Ctor.CONSTRUCTOR: Literal(dill_load_string),
                 Ctor.ARGS: lambda x: [dill_dump_string(x)],
                 Ctor.KWARGS: Literal(None),
             },
-            'validate_conversion': lambda x, serialized_x: (
+            "validate_conversion": lambda x, serialized_x: (
                 x == Ctor._construct_obj(serialized_x)
             ),
         }
 
     @classmethod
     def decorator_deconstruction_spec(cls, obj):
-        if not isinstance(obj, type) and hasattr(obj, '_py2json_deconstruction_spec'):
+        if not isinstance(obj, type) and hasattr(obj, "_py2json_deconstruction_spec"):
             return obj._py2json_deconstruction_spec
 
     @classmethod
@@ -422,74 +423,78 @@ class Ctor(CtorNames):
         """
         return [
             {
-                'description': 'For functools.partial',
-                'check_type': lambda x: isinstance(x, functools.partial),
-                'spec': {
+                "description": "For functools.partial",
+                "check_type": lambda x: isinstance(x, functools.partial),
+                "spec": {
                     Ctor.CONSTRUCTOR: Literal(functools.partial),
                     Ctor.ARGS: lambda x: [x.func, *x.args],
                     Ctor.KWARGS: lambda x: dict(x.keywords),
                 },
-                'validate_conversion': lambda x, serialized_x: (
+                "validate_conversion": lambda x, serialized_x: (
                     (deserialized_x := Ctor._construct_obj(serialized_x))
                     and all(
                         getattr(x, a, NOT_SET) == getattr(deserialized_x, a, NOT_SET)
-                        for a in ('func', 'args', 'keywords')
+                        for a in ("func", "args", "keywords")
                     )
                 ),
             },
             numpy_deconstruction_spec(),
             {
-                'description': 'for class methods or class constructors',
-                'check_type': lambda x: inspect.ismethod(x) or inspect.isclass(x),
-                'spec': {
+                "description": "for class methods or class constructors",
+                "check_type": lambda x: inspect.ismethod(x) or inspect.isclass(x),
+                "spec": {
                     Ctor.CONSTRUCTOR: Literal(cls._deserialize_ctor_from_jdict),
                     Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
                     Ctor.KWARGS: Literal(None),
                 },
             },
             {
-                'description': 'for functions',
-                'check_type': inspect.isfunction,
-                'spec': {
+                "description": "for functions",
+                "check_type": inspect.isfunction,
+                "spec": {
                     Ctor.CONSTRUCTOR: Literal(cls._deserialize_ctor_from_jdict),
                     Ctor.ARGS: lambda x: [cls._serialize_ctor_to_jdict(x)],
                     Ctor.KWARGS: Literal(None),
                 },
             },
             {
-                'description': 'For instances that have from_jdict and to_jdict methods',
-                'check_type': lambda x: not isinstance(x, type)
-                and hasattr(x, 'from_jdict')
-                and hasattr(x, 'to_jdict'),
-                'spec': {
+                "description": "For instances that have from_jdict and to_jdict methods",
+                "check_type": lambda x: (
+                    not isinstance(x, type)
+                    and hasattr(x, "from_jdict")
+                    and hasattr(x, "to_jdict")
+                ),
+                "spec": {
                     Ctor.CONSTRUCTOR: lambda x: type(x).from_jdict,
                     Ctor.ARGS: lambda x: [x.to_jdict()],
                     Ctor.KWARGS: Literal(None),
                 },
-                'validate_conversion': lambda x, serialized_x: (
+                "validate_conversion": lambda x, serialized_x: (
                     x.to_jdict() == Ctor._construct_obj(serialized_x).to_jdict()
                 ),
             },
             {
-                'description': 'For instances that have from_ddp_jdict and to_dpp_jdict methods',
-                'check_type': lambda x: not isinstance(x, type)
-                and hasattr(x, 'from_dpp_jdict')
-                and hasattr(x, 'to_dpp_jdict'),
-                'spec': {
+                "description": "For instances that have from_ddp_jdict and to_dpp_jdict methods",
+                "check_type": lambda x: (
+                    not isinstance(x, type)
+                    and hasattr(x, "from_dpp_jdict")
+                    and hasattr(x, "to_dpp_jdict")
+                ),
+                "spec": {
                     Ctor.CONSTRUCTOR: lambda x: type(x).from_dpp_jdict,
                     Ctor.ARGS: lambda x: [x.to_dpp_jdict()],
                     Ctor.KWARGS: Literal(None),
                 },
-                'validate_conversion': lambda x, serialized_x: (
+                "validate_conversion": lambda x, serialized_x: (
                     x.to_dpp_jdict() == Ctor._construct_obj(serialized_x).to_dpp_jdict()
                 ),
             },
             {
-                'description': 'For dataclasses.dataclass instance',
-                'check_type': lambda x: (
+                "description": "For dataclasses.dataclass instance",
+                "check_type": lambda x: (
                     dataclasses.is_dataclass(x) and not isinstance(x, type)
                 ),
-                'spec': {
+                "spec": {
                     Ctor.CONSTRUCTOR: lambda x: type(x),
                     Ctor.ARGS: Literal(None),
                     Ctor.KWARGS: lambda x: {
@@ -497,7 +502,7 @@ class Ctor(CtorNames):
                         for field in dataclasses.fields(x)
                     },
                 },
-                'validate_conversion': lambda x, serialized_x: (
+                "validate_conversion": lambda x, serialized_x: (
                     (deserialized_x := Ctor._construct_obj(serialized_x))
                     and (x_dict := dataclasses.asdict(x))
                     and (deserx_dict := dataclasses.asdict(deserialized_x))
@@ -549,7 +554,7 @@ class Ctor(CtorNames):
         elif cls.is_python_to_json_basic_type(obj):
             return obj
         else:
-            CtorException(f'Cannot construct unknown obj type: {type(obj)}')
+            CtorException(f"Cannot construct unknown obj type: {type(obj)}")
 
     @classmethod
     def deconstruct(
@@ -577,7 +582,7 @@ class Ctor(CtorNames):
         decon_ouputs = (Ctor.JSON_DICT, Ctor.CTOR_DICT)
         if output_type not in decon_ouputs:
             raise CtorException(
-                f'deconstruct output type must be one of: {decon_ouputs}'
+                f"deconstruct output type must be one of: {decon_ouputs}"
             )
 
         if not cls.is_supported_by_default_remap(obj):
@@ -596,7 +601,7 @@ class Ctor(CtorNames):
                     value = cls._deconstruct_obj(value, validate_conversion)
                 except CtorException:
                     raise CtorException(
-                        f'deconstruction spec not found for non-basic type at path={path}, key={key}'
+                        f"deconstruction spec not found for non-basic type at path={path}, key={key}"
                     )
             return key, value
 
@@ -753,7 +758,7 @@ class Ctor(CtorNames):
             isinstance(obj, type)
             or (spec := cls.decorator_deconstruction_spec(obj)) is None
         ):
-            spec = next(s for s in cls.deconstruction_specs if s['check_type'](obj))
+            spec = next(s for s in cls.deconstruction_specs if s["check_type"](obj))
 
         return spec
 
@@ -772,10 +777,10 @@ class Ctor(CtorNames):
         try:
             s = cls._get_deconstruction_spec(obj)
             try:
-                serializer = s['serializer']
+                serializer = s["serializer"]
             except KeyError:
-                s['serializer'] = mk_serializer_and_deserializer(s['spec'])
-                serializer = s['serializer']
+                s["serializer"] = mk_serializer_and_deserializer(s["spec"])
+                serializer = s["serializer"]
 
             ctor_dict = serializer(obj)
 
@@ -795,27 +800,27 @@ class Ctor(CtorNames):
         except (StopIteration, KeyError):
             try:
                 s = cls.fallback_deconstruction_spec
-                serializer = mk_serializer_and_deserializer(s['spec'])
+                serializer = mk_serializer_and_deserializer(s["spec"])
                 ctor_dict = serializer(obj)
                 cls._validate_conversion(obj, ctor_dict, s)
                 return ctor_dict
 
             except Exception as e:
                 raise CtorException(
-                    f'deconstruction spec not found for non-basic type: {obj}'
+                    f"deconstruction spec not found for non-basic type: {obj}"
                 ) from e
 
     @classmethod
     def _validate_conversion(cls, obj, ctor_dict, deconstruction_spec):
         try:
-            validator = deconstruction_spec['validate_conversion']
+            validator = deconstruction_spec["validate_conversion"]
         except KeyError:
-            deconstruction_spec[
-                'validate_conversion'
-            ] = cls._default_conversion_validation
-            validator = deconstruction_spec['validate_conversion']
+            deconstruction_spec["validate_conversion"] = (
+                cls._default_conversion_validation
+            )
+            validator = deconstruction_spec["validate_conversion"]
         if validator(obj, ctor_dict) is False:
-            raise CtorException(f'deconstruction validation test failed for: {obj}')
+            raise CtorException(f"deconstruction validation test failed for: {obj}")
 
     @classmethod
     def _get_value(cls, dict_obj, key, default_value):
@@ -874,20 +879,20 @@ class Ctor(CtorNames):
 
         def decorator(_class):
             if not isinstance(_class, type):
-                raise CtorException(f'expected a class, got {type(_class)}: {_class}')
+                raise CtorException(f"expected a class, got {type(_class)}: {_class}")
 
             _class._py2json_deconstruction_spec = {
-                'check_type': lambda obj: isinstance(obj, _class),
-                'spec': {
+                "check_type": lambda obj: isinstance(obj, _class),
+                "spec": {
                     cls.CONSTRUCTOR: obj_to_constructor or Literal(_class),
                     cls.ARGS: obj_to_args or Literal(None),
                     cls.KWARGS: obj_to_kwargs or Literal(None),
                 },
             }
             if validate_conversion is not None:
-                _class._py2json_deconstruction_spec[
-                    'validate_conversion'
-                ] = validate_conversion
+                _class._py2json_deconstruction_spec["validate_conversion"] = (
+                    validate_conversion
+                )
 
             return _class
 

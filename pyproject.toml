@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "py2json"
-version = "0.1.28"
+version = "0.1.29"
 description = "Tools for json serialization of python objects"
 readme = "README.md"
 requires-python = ">=3.10"

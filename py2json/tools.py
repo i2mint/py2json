@@ -23,11 +23,11 @@ def _default_colon_parser(s: str):
     This simple parser returns a string suitable for `dotpath_to_obj` by
     converting the colon into a dot join: 'pkg.mod:Name.attr' -> 'pkg.mod.Name.attr'
     """
-    if ':' not in s:
+    if ":" not in s:
         return s
-    module, rest = s.split(':', 1)
+    module, rest = s.split(":", 1)
     # rest may contain dots already
-    return module + '.' + rest
+    return module + "." + rest
 
 
 def _mk_parser_from_sep(sep: str) -> Callable[[str], str]:
@@ -37,14 +37,14 @@ def _mk_parser_from_sep(sep: str) -> Callable[[str], str]:
     Otherwise split on the first occurrence of sep and join with a dot so that
     e.g. 'pkg.mod:Name.attr' with sep=':' -> 'pkg.mod.Name.attr'.
     """
-    if sep == '.':
+    if sep == ".":
         return lambda s: s
 
     def parser(s: str) -> str:
         if sep not in s:
             return s
         module, rest = s.split(sep, 1)
-        return module + '.' + rest
+        return module + "." + rest
 
     return parser
 
@@ -63,7 +63,7 @@ class JsonCodec:
         self,
         *,
         func_loader: Optional[Callable[[Any], Callable]] = None,
-        path_parser: Optional[Union[Callable[[str], str], str]] = '.',
+        path_parser: Optional[Union[Callable[[str], str], str]] = ".",
     ):
         self.func_loader = func_loader
         # path_parser may be a callable or a string separator; default is '.'
@@ -73,7 +73,7 @@ class JsonCodec:
             # interpret the string as the separator between module and object
             self.path_parser = _mk_parser_from_sep(path_parser)
         else:
-            raise TypeError('path_parser must be a callable or a separator string')
+            raise TypeError("path_parser must be a callable or a separator string")
 
     # encode python -> json-friendly structure
     def encode(self, obj: Any) -> Any:
@@ -117,7 +117,7 @@ class JsonCodec:
 def make_json_codec(
     *,
     func_loader: Optional[Callable[[Any], Callable]] = None,
-    path_parser: Optional[Union[Callable[[str], str], str]] = '.',
+    path_parser: Optional[Union[Callable[[str], str], str]] = ".",
 ) -> JsonCodec:
     """Factory for a Codec configured with a func_loader and path protocol.
 
@@ -129,4 +129,4 @@ def make_json_codec(
     return JsonCodec(func_loader=func_loader, path_parser=path_parser)
 
 
-__all__ = ['JsonCodec', 'make_json_codec']
+__all__ = ["JsonCodec", "make_json_codec"]

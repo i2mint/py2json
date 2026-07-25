@@ -29,8 +29,8 @@ Example (colon separator):
 ```py
 from py2json import make_json_codec
 
-codec = make_json_codec(path_parser=':')
-encoded = codec.encode('collections.namedtuple:MyTuple')
+codec = make_json_codec(path_parser=":")
+encoded = codec.encode("collections.namedtuple:MyTuple")
 decoded = codec.decode(encoded)
 ```
 Tools for json serialization of python objects
@@ -46,16 +46,17 @@ Create a `namedtuple` using `Ctor` and instantiate it:
 from py2json.ctor import Ctor
 from collections import namedtuple
 
-ctor_jdict = Ctor.to_ctor_dict(namedtuple, args=('A', 'x y z'))
+ctor_jdict = Ctor.to_ctor_dict(namedtuple, args=("A", "x y z"))
 A = Ctor.construct(ctor_jdict)
-inst = A('one', 'two', 'three')
+inst = A("one", "two", "three")
 ```
 
 Use `fakit` to express and run a call given a dotted path:
 
 ```py
 from py2json.fakit import fakit
-fakit({'f': 'os.path.join', 'a': ['I', 'am', 'a', 'filepath']})
+
+fakit({"f": "os.path.join", "a": ["I", "am", "a", "filepath"]})
 ```
 
 Resolve dotted references and round-trip:
@@ -63,6 +64,7 @@ Resolve dotted references and round-trip:
 ```py
 from py2json.fakit import obj_to_dotpath, dotpath_to_obj
 from inspect import Signature
+
 dot = obj_to_dotpath(Signature.replace)
 assert dotpath_to_obj(dot) is Signature.replace
 ```
@@ -104,19 +106,21 @@ Say we are given the code below.
 def func(obj):
     return obj.a + obj.b
 
+
 class A:
     e = 2
+
     def __init__(self, a=0, b=0, c=1, d=10):
         self.a = a
         self.b = b
         self.c = c
         self.d = d
-        
+
     def target_func(self, x=3):
         t = func(self)
         tt = self.other_method(t)
         return x * tt / self.e
-    
+
     def other_method(self, x=1):
         return self.c * x
 ```
